@@ -3,11 +3,11 @@ from scipy import misc
 from skimage import filters, measure
 import numpy as np
 import matplotlib.pyplot as plt
-from skimage.feature import peak_local_max
+from skimage.feature import peak_local_max,blob_dog
 from skimage.filters import threshold_otsu
 from skimage.segmentation import clear_border
 from skimage.measure import label, regionprops
-from skimage.morphology import closing, square, watershed
+from skimage.morphology import closing, square, watershed, disk
 from skimage.color import label2rgb
 import cv2
 import math
@@ -32,22 +32,24 @@ def performWatershed(image,filename):
     thresh = threshold_otsu(image)
 
     
-    bw = closing(image > thresh)
+    bw = closing(image > thresh*1)
     
     cleared = clear_border(bw)
+    
 
     distance = ndi.distance_transform_edt(cleared)
-    local_maxi = peak_local_max(distance, indices=False, footprint=np.ones((3, 3)),
+    local_maxi = peak_local_max(distance, indices=False, footprint=np.ones((10,10)),
                                 labels=cleared)
+    # local_maxi = blob_dog(cleared)
+    print(local_maxi.shape)
     markers = ndi.label(local_maxi)[0]
     label_im = watershed(-distance, markers, mask=cleared)
 
-
-    new = measure.regionprops(label_im.astype(int))
     label_im_orig = label_im.copy()
-    # for p in new:
-    #     if p.area <5 or p.area > 60:
-    #         label_im =removeLabel(label_im,p)
+    new = measure.regionprops(label_im.astype(int))
+    for p in new:
+        if p.convex_area <5 or p.convex_area >110 :
+            label_im =removeLabel(label_im,p)
 
     new = measure.regionprops(label_im.astype(int))
     # outputInformation(new)
@@ -63,9 +65,9 @@ def plotImage(image,label_im ,label_im_treated, cleared, centroids,filename):
     # ax[1].set_title('Otsu Thresholded Image')
     # ax[2].imshow(label_im,cmap='nipy_spectral_r')
     # ax[2].set_title('Segmented Image')
-    axes.imshow(label_im_treated,cmap='gray')
-    # for c in centroids:
-        # axes.scatter(c.centroid[1],c.centroid[0],c=0,s=2) 
+    axes.imshow(image,cmap='gray')
+    for c in centroids:
+        axes.scatter(c.centroid[1],c.centroid[0],c=0,s=2) 
     # axes.set_title('Centroids Found')
 
     fig.tight_layout()
