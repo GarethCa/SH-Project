@@ -35,7 +35,7 @@ def performWatershed(image,filename):
     bw = closing(image > thresh*1)
     
     cleared = clear_border(bw)
-    
+
 
     distance = ndi.distance_transform_edt(cleared)
     local_maxi = peak_local_max(distance, indices=False, footprint=np.ones((10,10)),
