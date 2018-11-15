@@ -27,78 +27,91 @@ def outputInformation(labels):
             counter = counter +1
         the_file.close()
 
-def performWatershed(image,filename):
-    image = ndi.gaussian_filter(image,sigma=1)
+def segment(image,filename,bulk=True):
+    image = ndi.gaussian_filter(image,sigma=0.3)
     thresh = threshold_otsu(image)
-
-    
-    bw = closing(image > thresh*1)
-    
+    bw = closing(image > thresh*1.2)
     cleared = clear_border(bw)
-
-
     distance = ndi.distance_transform_edt(cleared)
-    local_maxi = peak_local_max(distance, indices=False, footprint=np.ones((10,10)),
+    local_maxi = peak_local_max(distance, indices=False, footprint=np.ones((5,5)),
                                 labels=cleared)
-    # local_maxi = blob_dog(cleared)
-    print(local_maxi.shape)
     markers = ndi.label(local_maxi)[0]
     label_im = watershed(-distance, markers, mask=cleared)
 
     label_im_orig = label_im.copy()
-    new = measure.regionprops(label_im.astype(int))
-    for p in new:
-        if p.convex_area <5 or p.convex_area >110 :
+    label_info = measure.regionprops(label_im.astype(int))
+    for p in label_info:
+        if p.convex_area <10 or p.convex_area >70 :
             label_im =removeLabel(label_im,p)
 
-    new = measure.regionprops(label_im.astype(int))
-    # outputInformation(new)
-    plotImage(image,label_im_orig,label_im,cleared,new,filename)
+    label_info = measure.regionprops(label_im.astype(int))
+    outputInformation(label_info)
+    if bulk:
+        plotImageBulk(image,label_info,filename)
+    else:
+        plotImage(image,label_im_orig,label_im,cleared,label_info,filename)
 
 
-def plotImage(image,label_im ,label_im_treated, cleared, centroids,filename):
+def plotImageBulk(image, centroids,filename):
     fig, axes = plt.subplots(ncols =1, sharex=True, sharey=True)
-    # ax = axes.ravel()
-    # ax[0].imshow(image, cmap='binary_r', interpolation='nearest')
-    # ax[0].set_title('Original Image')
-    # ax[1].imshow(cleared)
-    # ax[1].set_title('Otsu Thresholded Image')
-    # ax[2].imshow(label_im,cmap='nipy_spectral_r')
-    # ax[2].set_title('Segmented Image')
     axes.imshow(image,cmap='gray')
     for c in centroids:
         axes.scatter(c.centroid[1],c.centroid[0],c=0,s=2) 
-    # axes.set_title('Centroids Found')
 
     fig.tight_layout()
     fig.savefig("Output/"+filename,bbox_inches='tight')
     plt.close()
 
+def plotImage(image,label_im ,label_im_treated, cleared, centroids,filename):
+    fig, axes = plt.subplots(ncols =2,nrows=2, sharex=True, sharey=True)
+    ax = axes.ravel()
+    ax[0].imshow(image, cmap='binary_r', interpolation='nearest')
+    ax[0].set_title('Original Image')
+    ax[1].imshow(cleared)
+    ax[1].set_title('Otsu Thresholded Image')
+    ax[2].imshow(label_im,cmap='nipy_spectral_r')
+    ax[2].set_title('Segmented Image')
+    ax[3].imshow(image,cmap='gray')
+    for c in centroids:
+        ax[3].scatter(c.centroid[1],c.centroid[0],c=0,s=5) 
+    ax[3].set_title('Centroids Found')
+
+    plt.tight_layout()
+    plt.show()
+    plt.close()
+
+def runOnT():
+    files = os.listdir("./green_focus")
+    files = sorted(files, key=lambda item: (int(item.partition(' ')[0])
+                                if item[0].isdigit() else float('inf'), item))
+
+    for filename in files:
+        if filename.endswith("005.TIF"): 
+            print(filename)
+            image = cv2.imread("./green_focus/"+filename,0) 
+            segment(image,filename,bulk=True)
+            del image
+            continue
+        else:
+            continue
+
+def runSingle(filename):
+    image = cv2.imread("green_focus/"+filename,0)
+    segment(image,filename,bulk=False)
+
+def makeVideo():
+    files = os.listdir("Output/")
+    files = sorted(files, key=lambda item: (int(item.partition(' ')[0])
+                                if item[0].isdigit() else float('inf'), item))
+    frame = cv2.imread("Output/"+files[0])
+    height,width, layers = frame.shape
+    video = cv2.VideoWriter("OUTPUT.mp4",cv2.VideoWriter_fourcc(*'MP4V'), 16, (width,height))
+    for filename in files:
+        video.write(cv2.imread("Output/"+filename))
+    cv2.destroyAllWindows()
+    video.release()
+
+
+# makeVideo()
+runSingle("X060L005.TIF")
 image = cv2.imread("test.tif", 0)
-files = os.listdir("./green_focus")
-files = sorted(files, key=lambda item: (int(item.partition(' ')[0])
-                               if item[0].isdigit() else float('inf'), item))
-
-for filename in files:
-    if filename.endswith("005.TIF"): 
-        print(filename)
-        image = cv2.imread("./green_focus/"+filename,0) 
-        performWatershed(image,filename)
-        del image
-        continue
-    else:
-        continue
-
-
-files = os.listdir("Output/")
-files = sorted(files, key=lambda item: (int(item.partition(' ')[0])
-                               if item[0].isdigit() else float('inf'), item))
-frame = cv2.imread("Output/"+files[0])
-height,width, layers = frame.shape
-video = cv2.VideoWriter("OUTPUT.mp4",cv2.VideoWriter_fourcc(*'MP4V'), 16, (width,height))
-for filename in files:
-    video.write(cv2.imread("Output/"+filename))
-cv2.destroyAllWindows()
-video.release()
-
-
