@@ -27,7 +27,7 @@ def outputInformation(labels):
             counter = counter +1
         the_file.close()
 
-def segment(image,filename,bulk=True):
+def segment(image,filename,bulk=True, display=True):
     image = ndi.gaussian_filter(image,sigma=0.3)
     thresh = threshold_otsu(image)
     bw = closing(image > thresh*1.2)
@@ -46,10 +46,12 @@ def segment(image,filename,bulk=True):
 
     label_info = measure.regionprops(label_im.astype(int))
     outputInformation(label_info)
-    if bulk:
-        plotImageBulk(image,label_info,filename)
-    else:
-        plotImage(image,label_im_orig,label_im,cleared,label_info,filename)
+    if display:
+        if bulk:
+            plotImageBulk(image,label_info,filename)
+        else:
+            plotImage(image,label_im_orig,label_im,cleared,label_info,filename)
+    return label_info
 
 
 def plotImageBulk(image, centroids,filename):
@@ -111,7 +113,43 @@ def makeVideo():
     cv2.destroyAllWindows()
     video.release()
 
+def nearestNeighbour(cell, next):
+    best_val = 1000000
+    best_idx = 0
+    idx = 0
+    for n in next:
+        cur_val = cellDist(cell,n)
+        if cur_val < best_val:
+            best_val = cur_val
+            best_idx = idx
+        idx += 1
+
+    if best_val > 20:
+        return "100000"
+    return  best_idx
+
+def cellDist(cenOne, cenTwo):
+    x_dist = abs(cenOne.centroid[0] - cenTwo.centroid[0])
+    y_dist = abs(cenOne.centroid[1] - cenTwo.centroid[1])
+    return x_dist + y_dist
 
 # makeVideo()
-runSingle("X060L005.TIF")
-image = cv2.imread("test.tif", 0)
+# runSingle("X060L005.TIF")
+# image = cv2.imread("test.tif", 0)
+image1 = cv2.imread("green_focus/X060L005.TIF",0)
+image2 = cv2.imread("green_focus/X061L005.TIF",0)
+info1 = segment(image1,"1.png",False,False)
+info2 = segment(image2,"2.png",False,False)
+
+linked = []
+idx = 0
+for c in info1:
+    link_num = nearestNeighbour(c,info2)
+    print(idx, "-->",link_num)
+    idx += 1
+
+fig, axes = plt.subplots(ncols =1, sharex=True, sharey=True)
+axes.imshow(image1,cmap='gray')
+for c in info1:
+    axes.scatter(c.centroid[1],c.centroid[0],c=0,s=5) 
+plt.show()
