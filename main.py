@@ -19,7 +19,7 @@ def removeLabel(label_image, p):
     return label_image
 
 def outputInformation(labels):
-    with open('output.txt', 'a') as the_file:
+    with open('output.txt', 'w') as the_file:
         counter = 0
         for lab in labels:
             the_file.write(str(counter) + " " + str(map(math.floor,lab.centroid)) 
@@ -107,11 +107,12 @@ def makeVideo():
                                 if item[0].isdigit() else float('inf'), item))
     frame = cv2.imread("Output/"+files[0])
     height,width, layers = frame.shape
-    video = cv2.VideoWriter("OUTPUT.mp4",cv2.VideoWriter_fourcc(*'MP4V'), 16, (width,height))
+    video = cv2.VideoWriter("test.mp4",cv2.VideoWriter_fourcc(*'MP4V'), 16, (width,height))
     for filename in files:
         video.write(cv2.imread("Output/"+filename))
     cv2.destroyAllWindows()
     video.release()
+    print('Video Generated')
 
 def nearestNeighbour(cell, next):
     best_val = 1000000
@@ -126,30 +127,11 @@ def nearestNeighbour(cell, next):
 
     if best_val > 20:
         return "100000"
-    return  best_idx
+    return  best_idx 
 
 def cellDist(cenOne, cenTwo):
     x_dist = abs(cenOne.centroid[0] - cenTwo.centroid[0])
     y_dist = abs(cenOne.centroid[1] - cenTwo.centroid[1])
     return x_dist + y_dist
 
-# makeVideo()
-# runSingle("X060L005.TIF")
-# image = cv2.imread("test.tif", 0)
-image1 = cv2.imread("green_focus/X060L005.TIF",0)
-image2 = cv2.imread("green_focus/X061L005.TIF",0)
-info1 = segment(image1,"1.png",False,False)
-info2 = segment(image2,"2.png",False,False)
-
-linked = []
-idx = 0
-for c in info1:
-    link_num = nearestNeighbour(c,info2)
-    print(idx, "-->",link_num)
-    idx += 1
-
-fig, axes = plt.subplots(ncols =1, sharex=True, sharey=True)
-axes.imshow(image1,cmap='gray')
-for c in info1:
-    axes.scatter(c.centroid[1],c.centroid[0],c=0,s=5) 
-plt.show()
+makeVideo()
