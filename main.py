@@ -27,13 +27,13 @@ def outputInformation(labels):
             counter = counter +1
         the_file.close()
 
-def segment(image,filename,bulk=True, display=True):
+def segment(image,filename,bulk=True, display=False):
     image = ndi.gaussian_filter(image,sigma=0.3)
     thresh = threshold_otsu(image)
     bw = closing(image > thresh*1.2)
     cleared = clear_border(bw)
     distance = ndi.distance_transform_edt(cleared)
-    local_maxi = peak_local_max(distance, indices=False, footprint=np.ones((5,5)),
+    local_maxi = peak_local_max(distance, indices=False, footprint=np.ones((4,4)),
                                 labels=cleared)
     markers = ndi.label(local_maxi)[0]
     label_im = watershed(-distance, markers, mask=cleared)
@@ -58,7 +58,7 @@ def plotImageBulk(image, centroids,filename):
     fig, axes = plt.subplots(ncols =1, sharex=True, sharey=True)
     axes.imshow(image,cmap='gray')
     for c in centroids:
-        axes.scatter(c.centroid[1],c.centroid[0],c=0,s=2) 
+        axes.scatter(c.centroid[1],c.centroid[0],color='red',s=2) 
 
     fig.tight_layout()
     fig.savefig("Output/"+filename,bbox_inches='tight')
@@ -75,7 +75,7 @@ def plotImage(image,label_im ,label_im_treated, cleared, centroids,filename):
     ax[2].set_title('Segmented Image')
     ax[3].imshow(image,cmap='gray')
     for c in centroids:
-        ax[3].scatter(c.centroid[1],c.centroid[0],c=0,s=5) 
+        ax[3].scatter(c.centroid[1],c.centroid[0],color='red',s=5) 
     ax[3].set_title('Centroids Found')
 
     plt.tight_layout()
