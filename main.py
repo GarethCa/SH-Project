@@ -1,17 +1,16 @@
-from scipy import ndimage as ndi 
-from scipy import misc 
+from scipy import ndimage as ndi, misc 
 from skimage import filters, measure
 import numpy as np
 import matplotlib.pyplot as plt
+import cv2, math, os
+
 from skimage.feature import peak_local_max,blob_dog
 from skimage.filters import threshold_otsu
 from skimage.segmentation import clear_border
 from skimage.measure import label, regionprops
 from skimage.morphology import closing, square, watershed, disk
 from skimage.color import label2rgb
-import cv2
-import math
-import os
+
 
 def removeLabel(label_image, p):
     match = label_image == p.label

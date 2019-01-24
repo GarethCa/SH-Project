@@ -1,3 +1,6 @@
 *.TIF
 *.tif
 Data/
+*.txt
+*.mp4
+*.MP4
