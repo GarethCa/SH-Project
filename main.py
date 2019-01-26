@@ -3,7 +3,7 @@ from skimage import filters, measure
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2, math, os
-
+import ntpath
 from skimage.feature import peak_local_max,blob_dog
 from skimage.filters import threshold_otsu
 from skimage.segmentation import clear_border
@@ -27,6 +27,7 @@ def outputInformation(labels):
         the_file.close()
 
 def segment(image,filename,bulk=True, display=False):
+
     image = ndi.gaussian_filter(image,sigma=0.3)
     thresh = threshold_otsu(image)
     bw = closing(image > thresh*1.2)
@@ -60,26 +61,34 @@ def plotImageBulk(image, centroids,filename):
         axes.scatter(c.centroid[1],c.centroid[0],color='red',s=2) 
 
     fig.tight_layout()
-    fig.savefig("Output/"+filename,bbox_inches='tight')
+    fig.savefig("./Output/"+filename,bbox_inches='tight')
     plt.close()
 
 def plotImage(image,label_im ,label_im_treated, cleared, centroids,filename):
-    fig, axes = plt.subplots(ncols =2,nrows=2, sharex=True, sharey=True)
-    ax = axes.ravel()
-    ax[0].imshow(image, cmap='binary_r', interpolation='nearest')
-    ax[0].set_title('Original Image')
-    ax[1].imshow(cleared)
-    ax[1].set_title('Otsu Thresholded Image')
-    ax[2].imshow(label_im,cmap='nipy_spectral_r')
-    ax[2].set_title('Segmented Image')
-    ax[3].imshow(image,cmap='gray')
-    for c in centroids:
-        ax[3].scatter(c.centroid[1],c.centroid[0],color='red',s=5) 
-    ax[3].set_title('Centroids Found')
+    # fig, axes = plt.subplots(ncols =2,nrows=2, sharex=True, sharey=True)
+    # ax = axes.ravel()
+    # ax[0].imshow(image, cmap='binary_r', interpolation='nearest')
+    # ax[0].set_title('Original Image')
+    # ax[1].imshow(cleared)
+    # ax[1].set_title('Otsu Thresholded Image')
+    # ax[2].imshow(label_im,cmap='nipy_spectral_r')
+    # ax[2].set_title('Segmented Image')
+    # ax[3].imshow(image,cmap='gray')
+    # for c in centroids:
+    #     ax[3].scatter(c.centroid[1],c.centroid[0],color='red',s=5) 
+    # ax[3].set_title('Centroids Found')
 
-    plt.tight_layout()
-    plt.show()
-    plt.close()
+    # plt.tight_layout()
+    # # plt.show()
+    # plt.savefig("Output/"+filename,bbox_inches='tight')
+    # plt.close()
+    fig, axes = plt.subplots(ncols =1, sharex=True, sharey=True)
+    axes.imshow(image,cmap='gray')
+    for c in centroids:
+        axes.scatter(c.centroid[1],c.centroid[0],color='red',s=2) 
+
+    fig.tight_layout()
+    fig.savefig("./Output/"+ntpath.basename(filename),bbox_inches='tight')
 
 def runOnT():
     files = os.listdir("./green_focus")
@@ -97,8 +106,8 @@ def runOnT():
             continue
 
 def runSingle(filename):
-    image = cv2.imread("green_focus/"+filename,0)
-    segment(image,filename,bulk=False)
+    image = cv2.imread(filename,0)
+    segment(image,filename,bulk=False,display=True)
 
 def makeVideo():
     files = os.listdir("Output/")
@@ -133,5 +142,5 @@ def cellDist(cenOne, cenTwo):
     y_dist = abs(cenOne.centroid[1] - cenTwo.centroid[1])
     return x_dist + y_dist
 
-runOnT()
-makeVideo()
+# runOnT()
+# makeVideo()
