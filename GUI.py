@@ -45,6 +45,7 @@ def preview(barX,barL,lab):
 
 #Create Window
 window = Tk()
+window.title("Cell Tracker")
 
 #Placeholder Image Loader
 image = Image.open("./Resources/placeholder.png")
