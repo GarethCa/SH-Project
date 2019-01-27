@@ -59,35 +59,18 @@ def plotImageBulk(image, centroids,filename):
     axes.imshow(image,cmap='gray')
     for c in centroids:
         axes.scatter(c.centroid[1],c.centroid[0],color='red',s=2) 
-
-    fig.tight_layout()
+    
     fig.savefig("./Output/"+filename,bbox_inches='tight')
     plt.close()
 
 def plotImage(image,label_im ,label_im_treated, cleared, centroids,filename):
-    # fig, axes = plt.subplots(ncols =2,nrows=2, sharex=True, sharey=True)
-    # ax = axes.ravel()
-    # ax[0].imshow(image, cmap='binary_r', interpolation='nearest')
-    # ax[0].set_title('Original Image')
-    # ax[1].imshow(cleared)
-    # ax[1].set_title('Otsu Thresholded Image')
-    # ax[2].imshow(label_im,cmap='nipy_spectral_r')
-    # ax[2].set_title('Segmented Image')
-    # ax[3].imshow(image,cmap='gray')
-    # for c in centroids:
-    #     ax[3].scatter(c.centroid[1],c.centroid[0],color='red',s=5) 
-    # ax[3].set_title('Centroids Found')
-
-    # plt.tight_layout()
-    # # plt.show()
-    # plt.savefig("Output/"+filename,bbox_inches='tight')
-    # plt.close()
-    fig, axes = plt.subplots(ncols =1, sharex=True, sharey=True)
+    fig, axes = plt.subplots(ncols =1,squeeze=True)
     axes.imshow(image,cmap='gray')
     for c in centroids:
         axes.scatter(c.centroid[1],c.centroid[0],color='red',s=2) 
 
     fig.tight_layout()
+    axes.axis('off')
     fig.savefig("./Output/"+ntpath.basename(filename),bbox_inches='tight')
 
 def runOnT():
@@ -142,5 +125,22 @@ def cellDist(cenOne, cenTwo):
     y_dist = abs(cenOne.centroid[1] - cenTwo.centroid[1])
     return x_dist + y_dist
 
-# runOnT()
-# makeVideo()
+
+def plotImageMethod(image,label_im ,label_im_treated, cleared, centroids,filename):
+    fig, axes = plt.subplots(ncols =2,nrows=2, sharex=True, sharey=True)
+    ax = axes.ravel()
+    ax[0].imshow(image, cmap='binary_r', interpolation='nearest')
+    ax[0].set_title('Original Image')
+    ax[1].imshow(cleared)
+    ax[1].set_title('Otsu Thresholded Image')
+    ax[2].imshow(label_im,cmap='nipy_spectral_r')
+    ax[2].set_title('Segmented Image')
+    ax[3].imshow(image,cmap='gray')
+    for c in centroids:
+        ax[3].scatter(c.centroid[1],c.centroid[0],color='red',s=5) 
+    ax[3].set_title('Centroids Found')
+
+    plt.tight_layout()
+    # plt.show()
+    plt.savefig("Output/"+filename,bbox_inches='tight')
+    plt.close()

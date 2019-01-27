@@ -57,9 +57,9 @@ photo = ImageTk.PhotoImage(image)
 fpLabel = Label(window, text="Footprint").grid(row=2, column=0)
 fpSelector = Entry(window).grid(row=2,column=1)
 
-lbLabel = Label(window, text="LowBound").grid(row=3,column=0)
+lbLabel = Label(window, text="Minimum Size").grid(row=3,column=0)
 lbSelector = Entry(window).grid(row=3,column=1)
-hbLabel = Label(window, text="HighBound").grid(row=4,column=0)
+hbLabel = Label(window, text="Maximum Size").grid(row=4,column=0)
 hbSelector = Entry(window).grid(row=4,column=1)
 
 threshLabel = Label(window,text="Threshold").grid(row=5,column=0)
@@ -72,6 +72,7 @@ progBar = Progressbar(window,length=400).grid(row=7,column=0,columnspan=4)
 imLabel = Label(image=photo)
 imLabel.image =photo
 imLabel.grid(row=0,column=4, columnspan=3,rowspan=20)
+
 textForDir = StringVar()
 
 xSelect = Scale(window, from_=0,to=200,orient=HORIZONTAL,length=400)
@@ -86,13 +87,16 @@ lSelect.config(command= lambda x:changeFunc(imLabel,xSelect,lSelect))
 
 dirLabel = Label(window, text="Directory").grid(row=0,column=0)
 dirText = Entry(window,text=".",textvariable=textForDir)
-dirText.grid(row=0,column=1,columnspan=2)
-dirButt = Button(window,text="Choose",command=lambda: dirButtonHandler(imLabel,dirText,xSelect,lSelect,textForDir)).grid(row=0,column=3)
+dirText.grid(row=0,column=1)
+dirButt = Button(window,text="Choose",command=lambda: dirButtonHandler(imLabel,dirText,xSelect,lSelect,textForDir)).grid(row=0,column=2)
 
 previewButton = Button(window,text="Preview")
-previewButton.grid(row=6,column=0,columnspan=2)
+previewButton.grid(row=6,column=0)
 previewButton.config(command=lambda: preview(xSelect,lSelect,imLabel))
-trackButton = Button(window,text="Track").grid(row=6,column=2,columnspan=2)
+movieButton = Button(window, text="Generate Video")
+movieButton.grid(row=6, column=1)
+#movie config
+trackButton = Button(window,text="Track").grid(row=6,column=2)
 
 
 #Run Window
@@ -100,4 +104,3 @@ window.mainloop()
 
 
 
-    
