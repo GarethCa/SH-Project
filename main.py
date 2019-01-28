@@ -23,12 +23,14 @@ def removeLabel(label_image, p):
     return label_image
 
 
-def outputInformation(labels):
+def outputInformation(labels, filename):
     with open('output.txt', 'a') as the_file:
         counter = 0
         for lab in labels:
-            the_file.write(str(counter) + " " + str(map(math.floor, lab.centroid))
-                           + " " + str(lab.area) + '\n')
+            the_file.write("cell:"+str(counter) + " x:"+str(int(lab.centroid[0]))
+                           + " y:" + str(int(lab.centroid[1]))
+                           + " area:" + str(lab.area) 
+                           + " \t\t" + filename + '\n')
             counter = counter + 1
         the_file.close()
 
@@ -45,21 +47,23 @@ def segment(image, filename, bulk=True, display=False):
     markers = ndi.label(local_maxi)[0]
     label_im = watershed(-distance, markers, mask=cleared)
 
-    # label_im_orig = label_im.copy()
+    label_im_orig = label_im.copy()
     label_info = measure.regionprops(label_im.astype(int))
     for p in label_info:
         if p.convex_area < 10 or p.convex_area > 70:
             label_im = removeLabel(label_im, p)
 
     label_info = measure.regionprops(label_im.astype(int))
-    outputInformation(label_info)
-    
+    outputInformation(label_info,filename)
+    del label_im
+    del label_im_orig
+    del cleared
     # if display:
     #     if bulk:
     #         del label_im
     #         del label_im_orig
     #         del cleared
-    #         plotImageBulk(image, label_info, filename)
+    #         # plotImageBulk(image, label_info, filename)
     #     else:
     #         plotImage(
     #             image,
@@ -68,7 +72,7 @@ def segment(image, filename, bulk=True, display=False):
     #             cleared,
     #             label_info,
     #             filename)
-    # return label_info
+    return label_info
 
 
 def plotImageBulk(image, centroids, filename):
@@ -90,6 +94,7 @@ def plotImage(image, label_im, label_im_treated, cleared, centroids, filename):
     fig.tight_layout()
     axes.axis('off')
     fig.savefig("./Output/" + ntpath.basename(filename), bbox_inches='tight')
+    plt.close()
 
 
 
@@ -105,7 +110,7 @@ def runOnT():
     files = sorted(files)
     
     pool = Pool()
-    files = [f for f in files if f.endswith("005.TIF")]
+    # files = [f for f in files if f.endswith("005.TIF")]
     val = pool.map(runSingle,files)
     pool.close()
     pool.join()
