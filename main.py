@@ -45,30 +45,30 @@ def segment(image, filename, bulk=True, display=False):
     markers = ndi.label(local_maxi)[0]
     label_im = watershed(-distance, markers, mask=cleared)
 
-    label_im_orig = label_im.copy()
+    # label_im_orig = label_im.copy()
     label_info = measure.regionprops(label_im.astype(int))
     for p in label_info:
         if p.convex_area < 10 or p.convex_area > 70:
             label_im = removeLabel(label_im, p)
 
     label_info = measure.regionprops(label_im.astype(int))
-    # outputInformation(label_info)
+    outputInformation(label_info)
     
-    if display:
-        if bulk:
-            del label_im
-            del label_im_orig
-            del cleared
-            plotImageBulk(image, label_info, filename)
-        else:
-            plotImage(
-                image,
-                label_im_orig,
-                label_im,
-                cleared,
-                label_info,
-                filename)
-    return label_info
+    # if display:
+    #     if bulk:
+    #         del label_im
+    #         del label_im_orig
+    #         del cleared
+    #         plotImageBulk(image, label_info, filename)
+    #     else:
+    #         plotImage(
+    #             image,
+    #             label_im_orig,
+    #             label_im,
+    #             cleared,
+    #             label_info,
+    #             filename)
+    # return label_info
 
 
 def plotImageBulk(image, centroids, filename):
@@ -92,22 +92,26 @@ def plotImage(image, label_im, label_im_treated, cleared, centroids, filename):
     fig.savefig("./Output/" + ntpath.basename(filename), bbox_inches='tight')
 
 
-def runOnT():
-    files = os.listdir("./green_focus")
-    files = sorted(files)
-    pool = Pool(2)
-    files = [f for f in files if f.endswith("005.TIF")]
-    files = files[:2]
-    pool.map(runSingle,files)
-    pool.close()
-    pool.join()
-    
 
 
 def runSingle(filename):
-    image = cv2.imread(filename,0)
+    print(filename + " has started")
+    image = cv2.imread("./green_focus/"+filename,0)
     segment(image, filename, bulk=False, display=True)
+    print(filename + " is done")
 
+def runOnT():
+    files = os.listdir("./green_focus")
+    files = sorted(files)
+    
+    pool = Pool()
+    files = [f for f in files if f.endswith("005.TIF")]
+    val = pool.map(runSingle,files)
+    pool.close()
+    pool.join()
+    
+if __name__ == '__main__':
+    runOnT()
 
 def makeVideo():
     files = os.listdir("Output/")
@@ -164,6 +168,3 @@ def plotImageMethod(image, label_im, label_im_treated,
 
     plt.tight_layout()
     plt.savefig("Output/" + filename, bbox_inches='tight')
-
-#runOnT()
-#makeVideo()
