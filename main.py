@@ -2,6 +2,7 @@ from scipy import ndimage as ndi, misc
 from skimage import filters, measure
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 import cv2
 import math
 import os
@@ -12,6 +13,8 @@ from skimage.segmentation import clear_border
 from skimage.measure import label, regionprops
 from skimage.morphology import closing, square, watershed, disk
 from skimage.color import label2rgb
+import threading
+from multiprocessing import Pool
 
 
 def removeLabel(label_image, p):
@@ -21,7 +24,7 @@ def removeLabel(label_image, p):
 
 
 def outputInformation(labels):
-    with open('output.txt', 'w') as the_file:
+    with open('output.txt', 'a') as the_file:
         counter = 0
         for lab in labels:
             the_file.write(str(counter) + " " + str(map(math.floor, lab.centroid))
@@ -49,9 +52,13 @@ def segment(image, filename, bulk=True, display=False):
             label_im = removeLabel(label_im, p)
 
     label_info = measure.regionprops(label_im.astype(int))
-    outputInformation(label_info)
+    # outputInformation(label_info)
+    
     if display:
         if bulk:
+            del label_im
+            del label_im_orig
+            del cleared
             plotImageBulk(image, label_info, filename)
         else:
             plotImage(
@@ -70,7 +77,7 @@ def plotImageBulk(image, centroids, filename):
     for c in centroids:
         axes.scatter(c.centroid[1], c.centroid[0], color='red', s=2)
 
-    fig.savefig("./Output/" + filename, bbox_inches='tight')
+    fig.savefig("./Output/" +ntpath.basename( filename), bbox_inches='tight')
     plt.close()
 
 
@@ -87,22 +94,18 @@ def plotImage(image, label_im, label_im_treated, cleared, centroids, filename):
 
 def runOnT():
     files = os.listdir("./green_focus")
-    files = sorted(files, key=lambda item: (int(item.partition(' ')[0])
-                                            if item[0].isdigit() else float('inf'), item))
-
-    for filename in files:
-        if filename.endswith("005.TIF"):
-            print(filename)
-            image = cv2.imread("./green_focus/" + filename, 0)
-            segment(image, filename, bulk=True)
-            del image
-            continue
-        else:
-            continue
+    files = sorted(files)
+    pool = Pool(2)
+    files = [f for f in files if f.endswith("005.TIF")]
+    files = files[:2]
+    pool.map(runSingle,files)
+    pool.close()
+    pool.join()
+    
 
 
 def runSingle(filename):
-    image = cv2.imread(filename, 0)
+    image = cv2.imread(filename,0)
     segment(image, filename, bulk=False, display=True)
 
 
@@ -160,6 +163,7 @@ def plotImageMethod(image, label_im, label_im_treated,
     ax[3].set_title('Centroids Found')
 
     plt.tight_layout()
-    # plt.show()
     plt.savefig("Output/" + filename, bbox_inches='tight')
-    plt.close()
+
+#runOnT()
+#makeVideo()
