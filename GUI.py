@@ -111,8 +111,11 @@ previewButton.grid(row=6, column=0)
 previewButton.config(command=lambda: preview(xSelect, lSelect, imLabel))
 movieButton = Button(window, text="Generate Video")
 movieButton.grid(row=6, column=1)
+movieButton.config(command=lambda: makeVideo())
 
-trackButton = Button(window, text="Track").grid(row=6, column=2)
+trackButton = Button(window, text="Track")
+trackButton.grid(row=6, column=2)
+trackButton.config(command=lambda: runOnT(textForDir.get()))
 
 
 # Run Window

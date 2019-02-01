@@ -15,6 +15,7 @@ from skimage.morphology import closing, square, watershed, disk
 from skimage.color import label2rgb
 import threading
 from multiprocessing import Pool
+import glob
 
 
 def removeLabel(label_image, p):
@@ -55,23 +56,20 @@ def segment(image, filename, bulk=True, display=False):
 
     label_info = measure.regionprops(label_im.astype(int))
     outputInformation(label_info,filename)
-    del label_im
-    del label_im_orig
-    del cleared
-    # if display:
-    #     if bulk:
-    #         del label_im
-    #         del label_im_orig
-    #         del cleared
-    #         # plotImageBulk(image, label_info, filename)
-    #     else:
-    #         plotImage(
-    #             image,
-    #             label_im_orig,
-    #             label_im,
-    #             cleared,
-    #             label_info,
-    #             filename)
+    if display:
+        if bulk:
+            del label_im
+            del label_im_orig
+            del cleared
+            plotImageBulk(image, label_info, filename)
+        else:
+            plotImage(
+                image,
+                label_im_orig,
+                label_im,
+                cleared,
+                label_info,
+                filename)
     return label_info
 
 
@@ -94,23 +92,28 @@ def plotImage(image, label_im, label_im_treated, cleared, centroids, filename):
     fig.tight_layout()
     axes.axis('off')
     fig.savefig("./Output/" + ntpath.basename(filename), bbox_inches='tight')
-    plt.close()
+    # plt.close()
 
 
 
 
 def runSingle(filename):
-    print(filename + " has started")
-    image = cv2.imread("./green_focus/"+filename,0)
+    print(filename)
+    image = cv2.imread(filename,0)
+    print(image.shape)
     segment(image, filename, bulk=False, display=True)
     print(filename + " is done")
 
-def runOnT():
-    files = os.listdir("./green_focus")
-    files = sorted(files)
+def runOnT(filename=""):
+    if filename is not "":
+        files = glob.glob(filename)
+    else:
+        files = os.listdir("./green_focus")
+    files = sorted(files) 
+    print(files)
     
     pool = Pool()
-    # files = [f for f in files if f.endswith("005.TIF")]
+    files = [f for f in files if f.endswith("005.TIF")]
     val = pool.map(runSingle,files)
     pool.close()
     pool.join()
@@ -172,4 +175,4 @@ def plotImageMethod(image, label_im, label_im_treated,
     ax[3].set_title('Centroids Found')
 
     plt.tight_layout()
-    plt.savefig("Output/" + filename, bbox_inches='tight')
+    plt.savefig("Output/" + ntpath.basename(filename), bbox_inches='tight')
