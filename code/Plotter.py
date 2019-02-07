@@ -16,7 +16,8 @@ from skimage.color import label2rgb
 import threading
 from multiprocessing import Pool
 import glob
-import Cell, VideoGen
+import Cell
+import VideoGen
 
 
 def removeLabel(label_image, p):
@@ -31,13 +32,13 @@ def outputInformation(labels, filename):
         for lab in labels:
             the_file.write("cell:"+str(counter) + " x:"+str(int(lab.centroid[0]))
                            + " y:" + str(int(lab.centroid[1]))
-                           + " area:" + str(lab.area) 
+                           + " area:" + str(lab.area)
                            + " \t\t" + filename + '\n')
             counter = counter + 1
         the_file.close()
 
 
-def segment(image, filename,params, bulk=True, display=False):
+def segment(image, filename, params, bulk=True, display=False):
 
     image = ndi.gaussian_filter(image, sigma=0.3)
     thresh = threshold_otsu(image)
@@ -56,7 +57,7 @@ def segment(image, filename,params, bulk=True, display=False):
             label_im = removeLabel(label_im, p)
 
     label_info = measure.regionprops(label_im.astype(int))
-    outputInformation(label_info,filename)
+    outputInformation(label_info, filename)
     if display:
         if bulk:
             del label_im
@@ -80,7 +81,7 @@ def plotImageBulk(image, centroids, filename):
     for c in centroids:
         axes.scatter(c.centroid[1], c.centroid[0], color='red', s=2)
 
-    fig.savefig("../Output/" +ntpath.basename( filename), bbox_inches='tight')
+    fig.savefig("../Output/" + ntpath.basename(filename), bbox_inches='tight')
     plt.close()
 
 
@@ -95,28 +96,27 @@ def plotImage(image, label_im, label_im_treated, cleared, centroids, filename):
     fig.savefig("../Output/" + ntpath.basename(filename), bbox_inches='tight')
 
 
-
-
-def runSingle(filename,params):
+def runSingle(filename, params):
     print(filename)
-    image = cv2.imread(filename,0)
+    image = cv2.imread(filename, 0)
     print(image.shape)
-    segment(image, filename,params, bulk=False, display=True)
+    segment(image, filename, params, bulk=False, display=True)
     print(filename + " is done")
 
-def runOnT(params,filename=""):
+
+def runOnT(params, filename=""):
     if filename is not "":
         files = glob.glob(filename)
     else:
         files = os.listdir("./green_focus")
-    files = sorted(files) 
+    files = sorted(files)
     print(files)
-    
+
     pool = Pool()
-    val = pool.map(runSingle,params,files)
+    val = pool.map(runSingle, params, files)
     pool.close()
     pool.join()
-    
+
 
 def nearestNeighbour(cell, next):
     best_val = 1000000

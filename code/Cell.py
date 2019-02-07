@@ -1,6 +1,6 @@
 class Cell:
 
-    def __init__(self,id):
+    def __init__(self, id):
         self.id = id
         self.daughterL = None
         self.daughterR = None
@@ -13,5 +13,3 @@ class Cell:
 
     def death(self):
         self.alive = False
-
-    
