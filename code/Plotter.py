@@ -26,7 +26,7 @@ def removeLabel(label_image, p):
 
 
 def outputInformation(labels, filename):
-    with open('output.txt', 'a') as the_file:
+    with open('../output.txt', 'a') as the_file:
         counter = 0
         for lab in labels:
             the_file.write("cell:"+str(counter) + " x:"+str(int(lab.centroid[0]))
@@ -80,7 +80,7 @@ def plotImageBulk(image, centroids, filename):
     for c in centroids:
         axes.scatter(c.centroid[1], c.centroid[0], color='red', s=2)
 
-    fig.savefig("./Output/" +ntpath.basename( filename), bbox_inches='tight')
+    fig.savefig("../Output/" +ntpath.basename( filename), bbox_inches='tight')
     plt.close()
 
 
@@ -92,7 +92,7 @@ def plotImage(image, label_im, label_im_treated, cleared, centroids, filename):
 
     fig.tight_layout()
     axes.axis('off')
-    fig.savefig("./Output/" + ntpath.basename(filename), bbox_inches='tight')
+    fig.savefig("../Output/" + ntpath.basename(filename), bbox_inches='tight')
 
 
 
@@ -150,4 +150,4 @@ def plotImageMethod(image, label_im, label_im_treated,
     ax[3].set_title('Centroids Found')
 
     plt.tight_layout()
-    plt.savefig("Output/" + ntpath.basename(filename), bbox_inches='tight')
+    plt.savefig("../Output/" + ntpath.basename(filename), bbox_inches='tight')

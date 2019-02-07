@@ -46,7 +46,7 @@ def preview(barX, barL, lab):
     fileList = sorted(glob.glob(directory + "/*.TIF"))
     fileName = fileList[index]
     runSingle(fileName,params)
-    ima = Image.open("./Output/" + ntpath.basename(fileName))
+    ima = Image.open("../Output/" + ntpath.basename(fileName))
     photo = ImageTk.PhotoImage(ima)
     lab.image = photo
     lab.config(image=photo)
@@ -57,7 +57,7 @@ window = Tk()
 window.title("Cell Tracker")
 
 # Placeholder Image Loader
-image = Image.open("./Resources/placeholder.png")
+image = Image.open("../Resources/placeholder.png")
 photo = ImageTk.PhotoImage(image)
 
 
