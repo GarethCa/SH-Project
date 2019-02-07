@@ -16,6 +16,7 @@ from skimage.color import label2rgb
 import threading
 from multiprocessing import Pool
 import glob
+import Cell, VideoGen
 
 
 def removeLabel(label_image, p):
@@ -36,14 +37,14 @@ def outputInformation(labels, filename):
         the_file.close()
 
 
-def segment(image, filename, bulk=True, display=False):
+def segment(image, filename,params, bulk=True, display=False):
 
     image = ndi.gaussian_filter(image, sigma=0.3)
     thresh = threshold_otsu(image)
-    bw = closing(image > thresh * 1.2)
+    bw = closing(image > thresh * params[2])
     cleared = clear_border(bw)
     distance = ndi.distance_transform_edt(cleared)
-    local_maxi = peak_local_max(distance, indices=False, footprint=np.ones((4, 4)),
+    local_maxi = peak_local_max(distance, indices=False, footprint=np.ones((params[3], params[3])),
                                 labels=cleared)
     markers = ndi.label(local_maxi)[0]
     label_im = watershed(-distance, markers, mask=cleared)
@@ -51,7 +52,7 @@ def segment(image, filename, bulk=True, display=False):
     label_im_orig = label_im.copy()
     label_info = measure.regionprops(label_im.astype(int))
     for p in label_info:
-        if p.convex_area < 10 or p.convex_area > 70:
+        if p.convex_area < params[0] or p.convex_area > params[1]:
             label_im = removeLabel(label_im, p)
 
     label_info = measure.regionprops(label_im.astype(int))
@@ -92,19 +93,18 @@ def plotImage(image, label_im, label_im_treated, cleared, centroids, filename):
     fig.tight_layout()
     axes.axis('off')
     fig.savefig("./Output/" + ntpath.basename(filename), bbox_inches='tight')
-    # plt.close()
 
 
 
 
-def runSingle(filename):
+def runSingle(filename,params):
     print(filename)
     image = cv2.imread(filename,0)
     print(image.shape)
-    segment(image, filename, bulk=False, display=True)
+    segment(image, filename,params, bulk=False, display=True)
     print(filename + " is done")
 
-def runOnT(filename=""):
+def runOnT(params,filename=""):
     if filename is not "":
         files = glob.glob(filename)
     else:
@@ -113,29 +113,10 @@ def runOnT(filename=""):
     print(files)
     
     pool = Pool()
-    files = [f for f in files if f.endswith("005.TIF")]
-    val = pool.map(runSingle,files)
+    val = pool.map(runSingle,params,files)
     pool.close()
     pool.join()
     
-if __name__ == '__main__':
-    runOnT()
-
-def makeVideo():
-    files = os.listdir("Output/")
-    files = sorted(files, key=lambda item: (int(item.partition(' ')[0])
-                                            if item[0].isdigit() else float('inf'), item))
-    frame = cv2.imread("Output/" + files[0])
-    height, width, layers = frame.shape
-    video = cv2.VideoWriter(
-        "test.mp4", cv2.VideoWriter_fourcc(
-            *'MP4V'), 16, (width, height))
-    for filename in files:
-        video.write(cv2.imread("Output/" + filename))
-    cv2.destroyAllWindows()
-    video.release()
-    print('Video Generated')
-
 
 def nearestNeighbour(cell, next):
     best_val = 1000000
@@ -151,12 +132,6 @@ def nearestNeighbour(cell, next):
     if best_val > 20:
         return "100000"
     return best_idx
-
-
-def cellDist(cenOne, cenTwo):
-    x_dist = abs(cenOne.centroid[0] - cenTwo.centroid[0])
-    y_dist = abs(cenOne.centroid[1] - cenTwo.centroid[1])
-    return x_dist + y_dist
 
 
 def plotImageMethod(image, label_im, label_im_treated,

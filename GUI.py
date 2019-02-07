@@ -5,7 +5,7 @@ from PIL import Image, ImageTk
 import os
 import re
 import glob
-from main import *
+from Plotter import *
 import ntpath
 
 lScale = 0
@@ -39,11 +39,13 @@ def changeFunc(lab, barX, barL):
 
 
 def preview(barX, barL, lab):
+    params =[int(lbSelector.get()), int(hbSelector.get()),
+     float(threshSelector.get()), int(fpSelector.get())]
     index = (int(barX.get()) * lScale) + int(barL.get())
     directory = textForDir.get()
     fileList = sorted(glob.glob(directory + "/*.TIF"))
     fileName = fileList[index]
-    runSingle(fileName)
+    runSingle(fileName,params)
     ima = Image.open("./Output/" + ntpath.basename(fileName))
     photo = ImageTk.PhotoImage(ima)
     lab.image = photo
@@ -61,17 +63,29 @@ photo = ImageTk.PhotoImage(image)
 
 # Define Window
 
-fpLabel = Label(window, text="Footprint").grid(row=2, column=0)
-fpSelector = Entry(window).grid(row=2, column=1)
+lbVal = StringVar(window, value="10")
+hbVal = StringVar(window, value="70")
+threshVal = StringVar(window, value="1.2")
+footprintVal = StringVar(window, value =4)
 
+#Param Section##################################
+fpLabel = Label(window, text="Footprint").grid(row=2, column=0)
+fpSelector = Entry(window,textvariable =footprintVal)
+fpSelector.grid(row=2, column=1)
 lbLabel = Label(window, text="Minimum Size").grid(row=3, column=0)
-lbSelector = Entry(window).grid(row=3, column=1)
+lbSelector = Entry(window,textvariable=lbVal)
+lbSelector.grid(row=3, column=1)
 hbLabel = Label(window, text="Maximum Size").grid(row=4, column=0)
-hbSelector = Entry(window).grid(row=4, column=1)
+hbSelector = Entry(window,textvariable=hbVal)
+hbSelector.grid(row=4, column=1)
 
 threshLabel = Label(window, text="Threshold").grid(row=5, column=0)
-threshSelector = Entry(window).grid(row=5, column=1)
+threshSelector = Entry(window, textvariable =threshVal)
+threshSelector.grid(row=5, column=1)
 
+print(footprintVal.get())
+# params = [int(lbSelector.get()), int(hbSelector.get()), float(threshSelector.get()), int(fpSelector.get())]
+###################################################
 
 progBar = Progressbar(window, length=400).grid(row=7, column=0, columnspan=4)
 
