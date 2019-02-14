@@ -23,12 +23,14 @@ def removeLabel(label_image, p):
     return label_image
 
 
-def outputInformation(labels):
+def outputInformation(labels, filename):
     with open('output.txt', 'a') as the_file:
         counter = 0
         for lab in labels:
-            the_file.write(str(counter) + " " + str(map(math.floor, lab.centroid))
-                           + " " + str(lab.area) + '\n')
+            the_file.write("cell:"+str(counter) + " x:"+str(int(lab.centroid[0]))
+                           + " y:" + str(int(lab.centroid[1]))
+                           + " area:" + str(lab.area) 
+                           + " \t\t" + filename + '\n')
             counter = counter + 1
         the_file.close()
 
@@ -52,8 +54,8 @@ def segment(image, filename, bulk=True, display=False):
             label_im = removeLabel(label_im, p)
 
     label_info = measure.regionprops(label_im.astype(int))
-    # outputInformation(label_info)
-    
+
+    outputInformation(label_info,filename)
     if display:
         if bulk:
             del label_im
@@ -90,6 +92,7 @@ def plotImage(image, label_im, label_im_treated, cleared, centroids, filename):
     fig.tight_layout()
     axes.axis('off')
     fig.savefig("./Output/" + ntpath.basename(filename), bbox_inches='tight')
+    plt.close()
 
 
 
@@ -104,7 +107,7 @@ def runOnT():
     files = os.listdir("./green_focus")
     files = sorted(files)
     
-    pool = Pool(4)
+    pool = Pool()
     files = [f for f in files if f.endswith("005.TIF")]
     val = pool.map(runSingle,files)
     pool.close()
