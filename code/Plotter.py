@@ -17,8 +17,7 @@ import threading
 from multiprocessing import Pool
 import glob
 import Cell
-import VideoGen
-
+from VideoGen import *
 
 def removeLabel(label_image, p):
     match = label_image == p.label
@@ -96,7 +95,9 @@ def plotImage(image, label_im, label_im_treated, cleared, centroids, filename):
     fig.savefig("../Output/" + ntpath.basename(filename), bbox_inches='tight')
 
 
-def runSingle(filename, params):
+def runSingle(argTuple):
+    params =  argTuple[0]
+    filename = argTuple[1]
     print(filename)
     image = cv2.imread(filename, 0)
     print(image.shape)
@@ -106,14 +107,18 @@ def runSingle(filename, params):
 
 def runOnT(params, filename=""):
     if filename is not "":
-        files = glob.glob(filename)
+        files = os.listdir(str(filename.get()))
     else:
-        files = os.listdir("./green_focus")
+        files = os.listdir("../green_focus/")
     files = sorted(files)
     print(files)
-
+    files = [f for f in files if f.endswith("005.TIF")]
+    paramFileList =[]
+    for fil in files:
+        paramFileList.append((params,"../green_focus/"+fil))
+    print(paramFileList)
     pool = Pool()
-    val = pool.map(runSingle, params, files)
+    val = pool.map(runSingle, paramFileList)
     pool.close()
     pool.join()
 
@@ -151,3 +156,9 @@ def plotImageMethod(image, label_im, label_im_treated,
 
     plt.tight_layout()
     plt.savefig("../Output/" + ntpath.basename(filename), bbox_inches='tight')
+
+if __name__ == "__main__":
+    params = [10, 70,1.2, 4]
+    runOnT(params)
+    makeVideo()
+    

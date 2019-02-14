@@ -6,6 +6,7 @@ import os
 import re
 import glob
 from Plotter import *
+from VideoGen import *
 import ntpath
 
 lScale = 0
@@ -45,11 +46,17 @@ def preview(barX, barL, lab):
     directory = textForDir.get()
     fileList = sorted(glob.glob(directory + "/*.TIF"))
     fileName = fileList[index]
-    runSingle(fileName, params)
+    runSingle( (params,fileName))
     ima = Image.open("../Output/" + ntpath.basename(fileName))
     photo = ImageTk.PhotoImage(ima)
     lab.image = photo
     lab.config(image=photo)
+
+def genMovie(filename):
+    params = [int(lbSelector.get()), int(hbSelector.get()),
+              float(threshSelector.get()), int(fpSelector.get())]
+    runOnT(params,filename)
+    makeVideo(params,filename)
 
 
 # Create Window
@@ -83,8 +90,7 @@ threshLabel = Label(window, text="Threshold").grid(row=5, column=0)
 threshSelector = Entry(window, textvariable=threshVal)
 threshSelector.grid(row=5, column=1)
 
-print(footprintVal.get())
-# params = [int(lbSelector.get()), int(hbSelector.get()), float(threshSelector.get()), int(fpSelector.get())]
+
 ###################################################
 
 progBar = Progressbar(window, length=400).grid(row=7, column=0, columnspan=4)
@@ -125,7 +131,7 @@ previewButton.grid(row=6, column=0)
 previewButton.config(command=lambda: preview(xSelect, lSelect, imLabel))
 movieButton = Button(window, text="Generate Video")
 movieButton.grid(row=6, column=1)
-movieButton.config(command=lambda: makeVideo())
+movieButton.config(command=lambda: genMovie(textForDir))
 
 trackButton = Button(window, text="Track")
 trackButton.grid(row=6, column=2)
