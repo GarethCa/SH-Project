@@ -1,13 +1,14 @@
+import glob
+import ntpath
+import os
+import re
 from tkinter import *
 from tkinter import filedialog
 from tkinter.ttk import *
+
 from PIL import Image, ImageTk
-import os
-import re
-import glob
 from Plotter import *
 from VideoGen import *
-import ntpath
 
 lScale = 0
 
@@ -56,7 +57,7 @@ def genMovie(filename):
     params = [int(lbSelector.get()), int(hbSelector.get()),
               float(threshSelector.get()), int(fpSelector.get())]
     runOnT(params,filename)
-    makeVideo(params,filename)
+    makeVideo()
 
 
 # Create Window
