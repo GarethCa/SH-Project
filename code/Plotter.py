@@ -20,15 +20,16 @@ def removeLabel(label_image, p):
 
 
 def outputInformation(labels, filename):
-    with open('../output.txt', 'a') as the_file:
-        counter = 0
-        for lab in labels:
-            the_file.write("cell:" + str(counter) + " x:" + str(int(lab.centroid[0]))
+    text = ""
+    
+    counter = 0
+    for lab in labels:
+        text += ("cell:" + str(counter) + " x:" + str(int(lab.centroid[0]))
                            + " y:" + str(int(lab.centroid[1]))
                            + " area:" + str(lab.area)
                            + " \t\t" + filename + '\n')
-            counter = counter + 1
-        the_file.close()
+        counter = counter + 1
+    return text
 
 
 def segment(image, filename, params, bulk=True, display=False):
@@ -64,7 +65,11 @@ def segment(image, filename, params, bulk=True, display=False):
                 cleared,
                 label_info,
                 filename)
-    return label_info
+    else:
+        return outputInformation(label_info, filename)
+
+
+
 
 
 def plotImageBulk(image, centroids, filename):
@@ -92,27 +97,46 @@ def plotImage(image, label_im, label_im_treated, cleared, centroids, filename):
 def runSingle(argTuple):
     params = argTuple[0]
     filename = argTuple[1]
-    print(filename)
+    disp = argTuple[2]
     image = cv2.imread(filename, 0)
-    print(image.shape)
-    segment(image, filename, params, bulk=False, display=True)
-    print(filename + " is done")
+    return segment(image, filename, params, bulk=False, display=disp)
 
 
-def runOnT(params, filename=""):
+def runOnT(params, filename="", display = True):
     if filename is not "":
         files = os.listdir(str(filename.get()))
     else:
         files = os.listdir("../green_focus/")
     files = sorted(files)
-    print(files)
     files = [f for f in files if f.endswith("005.TIF")]
     paramFileList = []
     for fil in files:
-        paramFileList.append((params, "../green_focus/" + fil))
-    print(paramFileList)
+        paramFileList.append((params, "../green_focus/" + fil, display))
     pool = Pool()
     val = pool.map(runSingle, paramFileList)
+
+    pool.close()
+    pool.join()
+
+def runForTracking(params, filename=""):
+    if filename is not "":
+        files = os.listdir(str(filename.get()))
+    else:
+        files = os.listdir("../green_focus/")
+    files = sorted(files)
+    files = [f for f in files if f.endswith("X000L005.TIF")]
+    files = files[:16]
+    paramFileList = []
+    for fil in files:
+        paramFileList.append((params, "../green_focus/" + fil, False))
+    pool = Pool()
+    val = pool.map(runSingle, paramFileList)
+    # val = runSingle((params, "../green_focus/"+ files[0], False))
+    # print(val)
+    txt_output = open("output.txt", 'w')
+    for v in val:
+        txt_output.write(v)
+    txt_output.close()
 
     pool.close()
     pool.join()
@@ -155,5 +179,5 @@ def plotImageMethod(image, label_im, label_im_treated,
 
 if __name__ == "__main__":
     params = [10, 70, 1.2, 4]
-    runOnT(params)
+    runOnT(params, display=True)
     makeVideo()
