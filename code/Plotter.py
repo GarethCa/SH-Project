@@ -11,6 +11,9 @@ from skimage.segmentation import clear_border
 from skimage.morphology import closing, watershed
 from multiprocessing import Pool
 from VideoGen import *
+from Cell import *
+from Track import getInitialCells, iterateThroughCells, outputData
+from time import time
 
 
 def removeLabel(label_image, p):
@@ -20,20 +23,27 @@ def removeLabel(label_image, p):
 
 
 def outputInformation(labels, filename):
-    text = ""
-    
+    cellList = []
     counter = 0
+    filename = filename.split("X")[1]
+    filename = filename.split(".")[0]
+    filename = filename.split("L")
+    z = int(filename[1])
+    time = int(filename[0])
+    print(z)
+    print(filename)
     for lab in labels:
-        text += ("cell:" + str(counter) + " x:" + str(int(lab.centroid[0]))
-                           + " y:" + str(int(lab.centroid[1]))
-                           + " area:" + str(lab.area)
-                           + " \t\t" + filename + '\n')
+        cell = Cell(counter)
+        cell.addLocTime(time,int(lab.centroid[0]),int(lab.centroid[1]),z)
+        cellList.append(cell)
         counter = counter + 1
-    return text
+    return cellList
 
 
 def segment(image, filename, params, bulk=True, display=False):
-    image = ndi.gaussian_filter(image, sigma=0.3)
+    image = ndi.gaussian_filter(image, sigma=0.4)
+    if (image == 0).all():
+        return ""
     thresh = threshold_otsu(image)
     bw = closing(image > thresh * params[2])
     cleared = clear_border(bw)
@@ -66,6 +76,9 @@ def segment(image, filename, params, bulk=True, display=False):
                 label_info,
                 filename)
     else:
+        del label_im
+        del label_im_orig
+        del cleared
         return outputInformation(label_info, filename)
 
 
@@ -91,7 +104,7 @@ def plotImage(image, label_im, label_im_treated, cleared, centroids, filename):
     fig.tight_layout()
     axes.axis('off')
     fig.savefig("../Output/" + ntpath.basename(filename), bbox_inches='tight')
-    plt.close(fig)
+    # plt.close(fig)
 
 
 def runSingle(argTuple):
@@ -99,7 +112,10 @@ def runSingle(argTuple):
     filename = argTuple[1]
     disp = argTuple[2]
     image = cv2.imread(filename, 0)
-    return segment(image, filename, params, bulk=False, display=disp)
+    if image.shape != None:
+        return segment(image, filename, params, bulk=False, display=disp)
+    else:
+        return "\n"
 
 
 def runOnT(params, filename="", display = True):
@@ -124,22 +140,32 @@ def runForTracking(params, filename=""):
     else:
         files = os.listdir("../green_focus/")
     files = sorted(files)
-    files = [f for f in files if f.endswith("X000L005.TIF")]
-    files = files[:16]
+    filesFirst = [f for f in files if f.startswith("X019")]
+    restOfFiles = [f for f in files if  (f.startswith("X021"))]
+    print(restOfFiles)
     paramFileList = []
-    for fil in files:
+    secondParamList = []
+    for fil in filesFirst:
         paramFileList.append((params, "../green_focus/" + fil, False))
+    for fil in restOfFiles:
+        secondParamList.append((params, "../green_focus/"+ fil, False))
     pool = Pool()
+    t0 = time()
     val = pool.map(runSingle, paramFileList)
-    # val = runSingle((params, "../green_focus/"+ files[0], False))
-    # print(val)
-    txt_output = open("output.txt", 'w')
-    for v in val:
-        txt_output.write(v)
-    txt_output.close()
-
+    two_val = pool.map(runSingle,secondParamList)
+    t1 = time()
+    
     pool.close()
     pool.join()
+
+    print("Detection Complete, took {} seconds".format(t1-t0))
+    cellList = [item for sublist in val for item in sublist]
+    cellList2 = [item for sublist in two_val for item in sublist]
+    cellLists = getInitialCells(cellList)
+    iterateThroughCells(cellList2, cellLists)
+    outputData(cellLists)
+
+    
 
 
 def nearestNeighbour(cell, next):

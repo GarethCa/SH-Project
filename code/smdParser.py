@@ -7,7 +7,7 @@ import csv
 def getCellsAtTime(time, smdfile=""):
     smdfile = "newsmdfile.smd"
     # this is the timepoint where manual tracking started
-    startingPoint = 24
+    startingPoint = 19
     coords = list()
     smd = open(smdfile, "r")
     reader = csv.reader(smd)
