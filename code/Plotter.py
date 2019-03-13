@@ -14,6 +14,7 @@ from VideoGen import *
 from Cell import *
 from Track import getInitialCells, iterateThroughCells, outputData
 from time import time
+from itertools import groupby
 
 
 def removeLabel(label_image, p):
@@ -30,8 +31,6 @@ def outputInformation(labels, filename):
     filename = filename.split("L")
     z = int(filename[1])
     time = int(filename[0])
-    print(z)
-    print(filename)
     for lab in labels:
         cell = Cell(counter)
         cell.addLocTime(time,int(lab.centroid[0]),int(lab.centroid[1]),z)
@@ -142,23 +141,28 @@ def runForTracking(params, filename=""):
     files = sorted(files)
     filesFirst = [f for f in files if f.startswith("X001")]
     restOfFiles = [f for f in files if  (not f.startswith("X001"))]
-    print(restOfFiles)
     paramFileList = []
-    secondParamList = []
+    groupedFiles = [list(g) for k, g in groupby(files, key=lambda x: x[:4])]
     for fil in filesFirst:
         paramFileList.append((params, "../green_focus/" + fil, False))
-    for fil in restOfFiles:
-        secondParamList.append((params, "../green_focus/"+ fil, False))
-    secondParamList = secondParamList[:int(len(secondParamList)/32)]
+    
     pool = Pool()
     t0 = time()
     val = pool.map(runSingle, paramFileList)
-    two_val = pool.map(runSingle,secondParamList)
+    listTwo_Val = []
+    for pa in groupedFiles[1:50]:
+        secondParamList =[]
+        for fil in pa:
+            secondParamList.append((params, "../green_focus/"+ fil, False))
+        print(secondParamList[0])
+        two_val = pool.map(runSingle,secondParamList)
+        listTwo_Val.append(two_val)
     t1 = time()
     
     pool.close()
     pool.join()
 
+    
     print("Detection Complete, took {} seconds".format(t1-t0))
     cellList = [item for sublist in val for item in sublist]
     cellList2 = [item for sublist in two_val for item in sublist]
@@ -207,8 +211,13 @@ def plotImageMethod(image, label_im, label_im_treated,
     plt.tight_layout()
     plt.savefig("../Output/" + ntpath.basename(filename), bbox_inches='tight')
 
+def chunks(l, n):
+    n = max(1, n)
+    return [l[i:i+n] for i in xrange(0, len(l), n)]
+
 
 if __name__ == "__main__":
     params = [10, 70, 1.2, 4]
     runOnT(params, display=True)
     makeVideo()
+
