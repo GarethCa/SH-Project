@@ -140,8 +140,8 @@ def runForTracking(params, filename=""):
     else:
         files = os.listdir("../green_focus/")
     files = sorted(files)
-    filesFirst = [f for f in files if f.startswith("X019")]
-    restOfFiles = [f for f in files if  (f.startswith("X021"))]
+    filesFirst = [f for f in files if f.startswith("X001")]
+    restOfFiles = [f for f in files if  (not f.startswith("X001"))]
     print(restOfFiles)
     paramFileList = []
     secondParamList = []
@@ -149,6 +149,7 @@ def runForTracking(params, filename=""):
         paramFileList.append((params, "../green_focus/" + fil, False))
     for fil in restOfFiles:
         secondParamList.append((params, "../green_focus/"+ fil, False))
+    secondParamList = secondParamList[:int(len(secondParamList)/32)]
     pool = Pool()
     t0 = time()
     val = pool.map(runSingle, paramFileList)
@@ -162,7 +163,11 @@ def runForTracking(params, filename=""):
     cellList = [item for sublist in val for item in sublist]
     cellList2 = [item for sublist in two_val for item in sublist]
     cellLists = getInitialCells(cellList)
+    print("Iterate")
+    t0 = time()
     iterateThroughCells(cellList2, cellLists)
+    t1 = time()
+    print("Finished. Took {} seconds to process".format(t1-t0))
     outputData(cellLists)
 
     

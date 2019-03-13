@@ -48,7 +48,6 @@ def addCellToTracked(time, newcell, cellList):
         loc = newcell.lastLoc()
         cellList[index].addLocTime(loc.time,loc.x, loc.y, loc.z)
     else:
-        print("new cell")
         newCell = Cell(len(cellList))
         loc = newcell.lastLoc()
         newCell.addLocTime(loc.time,loc.x,loc.y,loc.z)
