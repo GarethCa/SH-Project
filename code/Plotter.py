@@ -6,13 +6,13 @@ import cv2
 import os
 import ntpath
 from skimage.feature import peak_local_max
-from skimage.filters import threshold_otsu
+from skimage.filters import threshold_otsu, threshold_mean
 from skimage.segmentation import clear_border
-from skimage.morphology import closing, watershed
+from skimage.morphology import *
 from multiprocessing import Pool
 from VideoGen import *
 from Cell import *
-from Track import getInitialCells, iterateThroughCells, outputData
+from Track import getInitialCells, iterateThroughCells, outputData,tooShort
 from time import time
 from itertools import groupby
 
@@ -40,13 +40,22 @@ def outputInformation(labels, filename):
 
 
 def segment(image, filename, params, bulk=True, display=False):
-    image = ndi.gaussian_filter(image, sigma=0.4)
+    image = ndi.gaussian_filter(image, sigma=0.6)
     if (image == 0).all():
         return ""
-    thresh = threshold_otsu(image)
-    bw = closing(image > thresh * params[2])
-    cleared = clear_border(bw)
-    distance = ndi.distance_transform_edt(cleared)
+    # Sets all Values to either black or white.
+    # thresh = threshold_otsu(image)
+    t = 40 * params[2]
+    su_thresh = image < t
+    image[:] = 255
+    image[su_thresh] = 0
+    # image = image > thresh
+    image = binary_opening(image)
+    image = erosion(image)
+    image = binary_closing(image)
+   
+    cleared = clear_border(image)
+    distance = ndi.distance_transform_edt(image)
     local_maxi = peak_local_max(distance, indices=False, footprint=np.ones((params[3], params[3])),
                                 labels=cleared)
     markers = ndi.label(local_maxi)[0]
@@ -139,8 +148,8 @@ def runForTracking(params, filename=""):
     else:
         files = os.listdir("../green_focus/")
     files = sorted(files)
-    filesFirst = [f for f in files if f.startswith("X001")]
-    restOfFiles = [f for f in files if  (not f.startswith("X001"))]
+    filesFirst = [f for f in files if f.startswith("X000")]
+    restOfFiles = [f for f in files if  (not f.startswith("X000"))]
     paramFileList = []
     groupedFiles = [list(g) for k, g in groupby(files, key=lambda x: x[:4])]
     for fil in filesFirst:
@@ -150,7 +159,7 @@ def runForTracking(params, filename=""):
     t0 = time()
     val = pool.map(runSingle, paramFileList)
     listTwo_Val = []
-    for pa in groupedFiles[1:50]:
+    for pa in groupedFiles:
         secondParamList =[]
         for fil in pa:
             secondParamList.append((params, "../green_focus/"+ fil, False))
@@ -165,12 +174,25 @@ def runForTracking(params, filename=""):
     
     print("Detection Complete, took {} seconds".format(t1-t0))
     cellList = [item for sublist in val for item in sublist]
-    cellList2 = [item for sublist in two_val for item in sublist]
     cellLists = getInitialCells(cellList)
-    print("Iterate")
+    
+    cells = []
     t0 = time()
-    iterateThroughCells(cellList2, cellLists)
+    disca =[]
+
+    for lis in listTwo_Val:
+        cellList2 = [item for sublist in lis for item in sublist]
+        cellList2 = getInitialCells(cellList2)
+        cellLists,discarded = iterateThroughCells(cellList2,cellLists)
+        disca = disca + discarded
+        print(len(cellLists), len(disca))
+    
     t1 = time()
+    cellLists = cellLists +disca
+    cellLists = [x for x in cellLists if not tooShort(x,5)]
+    
+    # cellLists.sort(key = cellSort,reverse=True)
+
     print("Finished. Took {} seconds to process".format(t1-t0))
     outputData(cellLists)
 
@@ -216,8 +238,14 @@ def chunks(l, n):
     return [l[i:i+n] for i in xrange(0, len(l), n)]
 
 
+
+def cellSort(cell):
+    return len(cell.locOverTime)
+
 if __name__ == "__main__":
     params = [10, 70, 1.2, 4]
     runOnT(params, display=True)
     makeVideo()
+
+
 

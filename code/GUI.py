@@ -77,9 +77,9 @@ photo = ImageTk.PhotoImage(image)
 # Define Window
 
 lbVal = StringVar(window, value="10")
-hbVal = StringVar(window, value="70")
-threshVal = StringVar(window, value="1.2")
-footprintVal = StringVar(window, value=4)
+hbVal = StringVar(window, value="50")
+threshVal = StringVar(window, value="1.4")
+footprintVal = StringVar(window, value=8)
 
 #Param Section##################################
 fpLabel = Label(window, text="Footprint").grid(row=2, column=0)
