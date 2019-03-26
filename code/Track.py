@@ -4,7 +4,7 @@ from Cell import *
 def cellDist(cellOne, cellTwo):
     x_dist = abs(cellOne.locOverTime[-1].x - cellTwo.locOverTime[-1].x)
     y_dist = abs(cellOne.locOverTime[-1].y - cellTwo.locOverTime[-1].y)
-    z_dist = abs(cellOne.locOverTime[-1].z - cellTwo.locOverTime[-1].z) *7
+    z_dist = abs(cellOne.locOverTime[-1].z - cellTwo.locOverTime[-1].z) *5
     return (x_dist + y_dist + z_dist)
 
 def getInitialCells(cellData):

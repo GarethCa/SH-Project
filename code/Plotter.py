@@ -159,7 +159,7 @@ def runForTracking(params, filename=""):
     t0 = time()
     val = pool.map(runSingle, paramFileList)
     listTwo_Val = []
-    for pa in groupedFiles:
+    for pa in groupedFiles[150:]:
         secondParamList =[]
         for fil in pa:
             secondParamList.append((params, "../green_focus/"+ fil, False))
@@ -180,23 +180,36 @@ def runForTracking(params, filename=""):
     t0 = time()
     disca =[]
 
-    for lis in listTwo_Val:
-        cellList2 = [item for sublist in lis for item in sublist]
-        cellList2 = getInitialCells(cellList2)
-        cellLists,discarded = iterateThroughCells(cellList2,cellLists)
+
+    pool = Pool()
+    t0 = time()
+    val = pool.map(runSingle, paramFileList)
+    list_for_cells = pool.map(threadedCellTrack, listTwo_Val)
+    t1 = time()
+    pool.close()
+    pool.join()
+
+    counter =0
+    for lis in list_for_cells:
+        cellLists,discarded = iterateThroughCells(lis,cellLists)
         disca = disca + discarded
-        print(len(cellLists), len(disca))
+        print(counter,len(cellLists), len(disca))
+        counter += 1
     
     t1 = time()
     cellLists = cellLists +disca
     cellLists = [x for x in cellLists if not tooShort(x,5)]
     
-    # cellLists.sort(key = cellSort,reverse=True)
+    cellLists.sort(key = cellSort,reverse=True)
 
     print("Finished. Took {} seconds to process".format(t1-t0))
     outputData(cellLists)
 
-    
+def threadedCellTrack(lis):
+    cellList2 = [item for sublist in lis for item in sublist]
+    cellList2 = getInitialCells(cellList2)
+    print(cellList2[0].lastTracked())
+    return cellList2 
 
 
 def nearestNeighbour(cell, next):
