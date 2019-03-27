@@ -45,7 +45,7 @@ def addCellToTracked(time, newcell, cellList):
     minDist = min(distances)
     index = distances.index(minDist)
     diff = cellList[index].lastTracked() - newcell.lastTracked();
-    if minDist < 15 and (diff > -3 and diff <0 ):
+    if minDist < 20 and (diff > -3 and diff <0 ):
         loc = newcell.lastLoc()
         cellList[index].addLocTime(loc.time,loc.x, loc.y, loc.z)
     else:

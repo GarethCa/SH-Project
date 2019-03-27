@@ -40,8 +40,15 @@ class Cell:
             return getChildCount(daughter.daughterL) + getChildCount(daughter.daughterR)
         
     def __str__(self):
+        if len(self.locOverTime) > 0:
+            birth =  self.locOverTime[0].time -1
+        else:
+            birth =  -1
         rep = ""
-        rep += ("cell {}\n".format(self.id))
+        rep += ("{} {} 0 0 genName\n".format(self.getChildCount(self.daughterL),
+                                    self.getChildCount(self.daughterR)))
+        rep += ("{} 0 -1 -1 genName2\n".format(birth))
+        rep += ("{} 0 -1 -1 0 -1 {}\n".format(birth, self.id))
         rep += ("{}\n".format(len(self.locOverTime)))
         for p in self.locOverTime:
             rep += ("{} {} {} {} -1 -1 -1 {}\n".format(p.time, p.x, p.y, p.z, p.comment))

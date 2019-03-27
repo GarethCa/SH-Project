@@ -40,7 +40,7 @@ def outputInformation(labels, filename):
 
 
 def segment(image, filename, params, bulk=True, display=False):
-    image = ndi.gaussian_filter(image, sigma=0.6)
+    
     if (image == 0).all():
         return ""
     # Sets all Values to either black or white.
@@ -50,9 +50,14 @@ def segment(image, filename, params, bulk=True, display=False):
     image[:] = 255
     image[su_thresh] = 0
     # image = image > thresh
-    image = binary_opening(image)
-    image = erosion(image)
+    
+    # image = erosion(image)
+    
     image = binary_closing(image)
+    
+    image = binary_opening(image)
+    image = ndi.gaussian_filter(image, sigma=0.2)
+    
    
     cleared = clear_border(image)
     distance = ndi.distance_transform_edt(image)
@@ -159,7 +164,7 @@ def runForTracking(params, filename=""):
     t0 = time()
     val = pool.map(runSingle, paramFileList)
     listTwo_Val = []
-    for pa in groupedFiles[150:]:
+    for pa in groupedFiles:
         secondParamList =[]
         for fil in pa:
             secondParamList.append((params, "../green_focus/"+ fil, False))
@@ -198,10 +203,13 @@ def runForTracking(params, filename=""):
     
     t1 = time()
     cellLists = cellLists +disca
-    cellLists = [x for x in cellLists if not tooShort(x,5)]
+    cellLists = [x for x in cellLists if not tooShort(x,10)]
     
-    cellLists.sort(key = cellSort,reverse=True)
-
+    cellLists.sort(key = cellSort)
+    counter = 0
+    for cell in cellLists:
+        cell.id = counter
+        counter += 1
     print("Finished. Took {} seconds to process".format(t1-t0))
     outputData(cellLists)
 
@@ -253,7 +261,7 @@ def chunks(l, n):
 
 
 def cellSort(cell):
-    return len(cell.locOverTime)
+    return cell.locOverTime[0].time
 
 if __name__ == "__main__":
     params = [10, 70, 1.2, 4]
