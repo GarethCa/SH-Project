@@ -1,4 +1,4 @@
-from scipy import ndimage as ndi, misc
+from scipy import ndimage as ndi
 from skimage import measure
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,7 +6,7 @@ import cv2
 import os
 import ntpath
 from skimage.feature import peak_local_max
-from skimage.filters import threshold_otsu, threshold_mean
+from skimage.filters import threshold_otsu
 from skimage.segmentation import clear_border
 from skimage.morphology import *
 from multiprocessing import Pool

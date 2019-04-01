@@ -1,6 +1,5 @@
 import cv2
 import os
-from Plotter import *
 
 
 def makeVideo():
