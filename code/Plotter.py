@@ -12,7 +12,7 @@ from skimage.morphology import *
 from multiprocessing import Pool
 from VideoGen import *
 from Cell import *
-from Track import getInitialCells, iterateThroughCells, outputData,tooShort
+from Track import getInitialCells, iterateThroughCells, outputData, tooShort
 from time import time
 from itertools import groupby
 
@@ -33,32 +33,26 @@ def outputInformation(labels, filename):
     time = int(filename[0])
     for lab in labels:
         cell = Cell(counter)
-        cell.addLocTime(time,int(lab.centroid[0]),int(lab.centroid[1]),z)
+        cell.addLocTime(time, int(lab.centroid[0]), int(lab.centroid[1]), z)
         cellList.append(cell)
         counter = counter + 1
     return cellList
 
 
 def segment(image, filename, params, bulk=True, display=False):
-    
+
     if (image == 0).all():
         return ""
     # Sets all Values to either black or white.
-    # thresh = threshold_otsu(image)
+    t = threshold_otsu(image)
     t = 40 * params[2]
-    su_thresh = image < t
-    image[:] = 255
-    image[su_thresh] = 0
-    # image = image > thresh
-    
+    image = image > t
+
+    # image = binary_closing(image)
     # image = erosion(image)
-    
-    image = binary_closing(image)
-    
     image = binary_opening(image)
     image = ndi.gaussian_filter(image, sigma=0.2)
-    
-   
+
     cleared = clear_border(image)
     distance = ndi.distance_transform_edt(image)
     local_maxi = peak_local_max(distance, indices=False, footprint=np.ones((params[3], params[3])),
@@ -95,9 +89,6 @@ def segment(image, filename, params, bulk=True, display=False):
         return outputInformation(label_info, filename)
 
 
-
-
-
 def plotImageBulk(image, centroids, filename):
     fig, axes = plt.subplots(ncols=1, sharex=True, sharey=True)
     axes.imshow(image, cmap='gray')
@@ -131,7 +122,7 @@ def runSingle(argTuple):
         return "\n"
 
 
-def runOnT(params, filename="", display = True):
+def runOnT(params, filename="", display=True):
     if filename is not "":
         files = os.listdir(str(filename.get()))
     else:
@@ -142,10 +133,11 @@ def runOnT(params, filename="", display = True):
     for fil in files:
         paramFileList.append((params, "../green_focus/" + fil, display))
     pool = Pool()
-    val = pool.map(runSingle, paramFileList)
+    pool.map(runSingle, paramFileList)
 
     pool.close()
     pool.join()
+
 
 def runForTracking(params, filename=""):
     if filename is not "":
@@ -154,37 +146,37 @@ def runForTracking(params, filename=""):
         files = os.listdir("../green_focus/")
     files = sorted(files)
     filesFirst = [f for f in files if f.startswith("X000")]
-    restOfFiles = [f for f in files if  (not f.startswith("X000"))]
+    [f for f in files if (not f.startswith("X000"))]
     paramFileList = []
     groupedFiles = [list(g) for k, g in groupby(files, key=lambda x: x[:4])]
     for fil in filesFirst:
         paramFileList.append((params, "../green_focus/" + fil, False))
-    
+
     pool = Pool()
     t0 = time()
     val = pool.map(runSingle, paramFileList)
+
     listTwo_Val = []
     for pa in groupedFiles:
-        secondParamList =[]
+        secondParamList = []
         for fil in pa:
-            secondParamList.append((params, "../green_focus/"+ fil, False))
+            secondParamList.append((params, "../green_focus/" + fil, False))
         print(secondParamList[0])
-        two_val = pool.map(runSingle,secondParamList)
+        two_val = pool.map(runSingle, secondParamList)
         listTwo_Val.append(two_val)
     t1 = time()
-    
+
     pool.close()
     pool.join()
 
-    
     print("Detection Complete, took {} seconds".format(t1-t0))
     cellList = [item for sublist in val for item in sublist]
     cellLists = getInitialCells(cellList)
-    
-    cells = []
-    t0 = time()
-    disca =[]
 
+    print("Length of cells found in first", len(cellLists))
+
+    t0 = time()
+    disca = []
 
     pool = Pool()
     t0 = time()
@@ -194,18 +186,18 @@ def runForTracking(params, filename=""):
     pool.close()
     pool.join()
 
-    counter =0
+    counter = 0
     for lis in list_for_cells:
-        cellLists,discarded = iterateThroughCells(lis,cellLists)
+        cellLists, discarded = iterateThroughCells(lis, cellLists)
         disca = disca + discarded
-        print(counter,len(cellLists), len(disca))
+        print(counter, len(cellLists), len(disca))
         counter += 1
-    
+
     t1 = time()
-    cellLists = cellLists +disca
-    cellLists = [x for x in cellLists if not tooShort(x,10)]
-    
-    cellLists.sort(key = cellSort)
+    cellLists = cellLists + disca
+    cellLists = [x for x in cellLists if not tooShort(x, 10)]
+
+    cellLists.sort(key=cellSort)
     counter = 0
     for cell in cellLists:
         cell.id = counter
@@ -213,11 +205,12 @@ def runForTracking(params, filename=""):
     print("Finished. Took {} seconds to process".format(t1-t0))
     outputData(cellLists)
 
+
 def threadedCellTrack(lis):
     cellList2 = [item for sublist in lis for item in sublist]
     cellList2 = getInitialCells(cellList2)
     print(cellList2[0].lastTracked())
-    return cellList2 
+    return cellList2
 
 
 def nearestNeighbour(cell, next):
@@ -254,19 +247,17 @@ def plotImageMethod(image, label_im, label_im_treated,
     plt.tight_layout()
     plt.savefig("../Output/" + ntpath.basename(filename), bbox_inches='tight')
 
+
 def chunks(l, n):
     n = max(1, n)
     return [l[i:i+n] for i in xrange(0, len(l), n)]
 
 
-
 def cellSort(cell):
     return cell.locOverTime[0].time
+
 
 if __name__ == "__main__":
     params = [10, 70, 1.2, 4]
     runOnT(params, display=True)
     makeVideo()
-
-
-

@@ -2,6 +2,7 @@ import cv2
 import os
 from Plotter import *
 
+
 def makeVideo():
     files = os.listdir("../Output/")
     files = sorted(files, key=lambda item: (int(item.partition(' ')[0])

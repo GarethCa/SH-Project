@@ -12,10 +12,11 @@ class Point:
 
     def comment(self, text):
         self.comment = text
-    
+
     def __str__(self):
-        string = str(self.x)  + " " + str(self.y) + " " +  str(self.z)
+        string = str(self.x) + " " + str(self.y) + " " + str(self.z)
         return string
+
 
 class TimeTuple:
 

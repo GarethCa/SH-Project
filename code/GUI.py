@@ -47,22 +47,24 @@ def preview(barX, barL, lab):
     directory = textForDir.get()
     fileList = sorted(glob.glob(directory + "/*.TIF"))
     fileName = fileList[index]
-    runSingle( (params,fileName,True))
+    runSingle((params, fileName, True))
     ima = Image.open("../Output/" + ntpath.basename(fileName))
     photo = ImageTk.PhotoImage(ima)
     lab.image = photo
     lab.config(image=photo)
 
+
 def genMovie(filename):
     params = [int(lbSelector.get()), int(hbSelector.get()),
               float(threshSelector.get()), int(fpSelector.get())]
-    runOnT(params,filename)
+    runOnT(params, filename)
     makeVideo()
+
 
 def runTracking(fileName):
     params = [int(lbSelector.get()), int(hbSelector.get()),
               float(threshSelector.get()), int(fpSelector.get())]
-    runForTracking(params,fileName)
+    runForTracking(params, fileName)
 
 
 # Create Window

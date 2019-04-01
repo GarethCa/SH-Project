@@ -1,5 +1,7 @@
 
 from Point import *
+
+
 class Cell:
 
     def __init__(self, ident):
@@ -18,18 +20,18 @@ class Cell:
 
     def lastTracked(self):
         return self.locOverTime[-1].time
-    
+
     def lastLoc(self):
         return self.locOverTime[-1]
 
     def addDaughter(self, left, cell):
         if left:
-            self.daughterL  = cell
+            self.daughterL = cell
         else:
             self.daughterR = cell
-    
-    def addLocTime(self,time, x,y,z):
-        self.locOverTime.append(Point(time,x,y,z))
+
+    def addLocTime(self, time, x, y, z):
+        self.locOverTime.append(Point(time, x, y, z))
 
     def getChildCount(self, daughter):
         if daughter is None:
@@ -38,23 +40,24 @@ class Cell:
             return 1
         else:
             return getChildCount(daughter.daughterL) + getChildCount(daughter.daughterR)
-        
+
     def __str__(self):
         if len(self.locOverTime) > 0:
-            birth =  self.locOverTime[0].time -1
+            birth = self.locOverTime[0].time - 1
         else:
-            birth =  -1
+            birth = -1
         rep = ""
         rep += ("{} {} 0 0 genName\n".format(self.getChildCount(self.daughterL),
-                                    self.getChildCount(self.daughterR)))
+                                             self.getChildCount(self.daughterR)))
         rep += ("{} 0 -1 -1 genName2\n".format(birth))
         rep += ("{} 0 -1 -1 0 -1 {}\n".format(birth, self.id))
         rep += ("{}\n".format(len(self.locOverTime)))
         for p in self.locOverTime:
-            rep += ("{} {} {} {} -1 -1 -1 {}\n".format(p.time, p.x, p.y, p.z, p.comment))
+            rep += ("{} {} {} {} -1 -1 -1 {}\n".format(p.time,
+                                                       p.x, p.y, p.z, p.comment))
         if self.daughterL != None:
             rep += str(self.daughterL)
         if self.daughterR != None:
-            rep+= str(self.daughterR)
-        rep+= "---\n"
+            rep += str(self.daughterR)
+        rep += "---\n"
         return rep
