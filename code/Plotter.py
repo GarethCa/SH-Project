@@ -15,6 +15,8 @@ from Cell import *
 from Track import getInitialCells, iterateThroughCells, outputData, tooShort
 from time import time
 from itertools import groupby
+from sklearn.cluster import DBSCAN
+import pandas as pd
 
 
 def removeLabel(label_image, p):
@@ -44,14 +46,17 @@ def segment(image, filename, params, bulk=True, display=False):
     if (image == 0).all():
         return ""
     # Sets all Values to either black or white.
-    t = threshold_otsu(image)
-    t = 40 * params[2]
+    copy = image.copy()
+    image = ndi.gaussian_filter(image, sigma=1)
+    t= 40
+    # t = threshold_otsu(image)
+    t = t * params[2]
     image = image > t
 
-    # image = binary_closing(image)
-    # image = erosion(image)
-    image = binary_opening(image)
-    image = ndi.gaussian_filter(image, sigma=0.2)
+    image = binary_closing(image)
+    image = erosion(image)
+    # image = binary_opening(image)
+    
 
     cleared = clear_border(image)
     distance = ndi.distance_transform_edt(image)
@@ -67,49 +72,61 @@ def segment(image, filename, params, bulk=True, display=False):
             label_im = removeLabel(label_im, p)
 
     label_info = measure.regionprops(label_im.astype(int))
-    outputInformation(label_info, filename)
+    image = copy
+    cellList = outputInformation(label_info, filename)
+    cellList = clusterTrimmer(cellList)
+
     if display:
         if bulk:
             del label_im
             del label_im_orig
             del cleared
-            plotImageBulk(image, label_info, filename)
+            plotImageBulk(image, cellList, filename)
         else:
             plotImage(
                 image,
-                label_im_orig,
-                label_im,
-                cleared,
-                label_info,
+                cellList,
                 filename)
     else:
         del label_im
         del label_im_orig
         del cleared
-        return outputInformation(label_info, filename)
+        return cellList
 
 
-def plotImageBulk(image, centroids, filename):
+def plotImageBulk(image, cellList, filename):
     fig, axes = plt.subplots(ncols=1, sharex=True, sharey=True)
     axes.imshow(image, cmap='gray')
     for c in centroids:
-        axes.scatter(c.centroid[1], c.centroid[0], color='red', s=2)
+        loc = c.locOverTime[-1]
+        axes.scatter(loc.x, loc.y, color='red', s=2)
 
     fig.savefig("../Output/" + ntpath.basename(filename), bbox_inches='tight')
     plt.close()
 
 
-def plotImage(image, label_im, label_im_treated, cleared, centroids, filename):
+def plotImage(image, cellList, filename):
     fig, axes = plt.subplots(ncols=1, squeeze=True)
     axes.imshow(image, cmap='gray')
-    for c in centroids:
-        axes.scatter(c.centroid[1], c.centroid[0], color='red', s=2)
+    for c in cellList:
+        loc = c.locOverTime[-1]
+        axes.scatter(loc.y, loc.x, color='red', s=2)
 
     fig.tight_layout()
     axes.axis('off')
     fig.savefig("../Output/" + ntpath.basename(filename), bbox_inches='tight')
     # plt.close(fig)
 
+def clusterTrimmer(cellList):
+    df = pd.DataFrame.from_records([c.to_dict() for c in cellList])
+    clustering = DBSCAN(eps=30, min_samples=10).fit(df)
+    counter = 0
+    for lab in clustering.labels_:
+        cellList[counter].setClustered(lab)
+        counter += 1
+    cellList = [cell for cell in cellList if cell.clustered > -1]
+    return cellList
+    
 
 def runSingle(argTuple):
     params = argTuple[0]
@@ -157,7 +174,7 @@ def runForTracking(params, filename=""):
     val = pool.map(runSingle, paramFileList)
 
     listTwo_Val = []
-    for pa in groupedFiles:
+    for pa in groupedFiles[140:240]:
         secondParamList = []
         for fil in pa:
             secondParamList.append((params, "../green_focus/" + fil, False))

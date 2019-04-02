@@ -9,6 +9,7 @@ class Cell:
         self.daughterL = None
         self.daughterR = None
         self.locOverTime = []
+        self.clustered = -1
         self.alive = True
 
     def mitosis(self):
@@ -40,6 +41,15 @@ class Cell:
             return 1
         else:
             return getChildCount(daughter.daughterL) + getChildCount(daughter.daughterR)
+
+    def to_dict(self):
+        loc = self.locOverTime[-1]
+        return {'x': loc.x,
+                'y': loc.y,
+                'z': loc.z}
+
+    def setClustered(self, cluster):
+        self.clustered = cluster
 
     def __str__(self):
         if len(self.locOverTime) > 0:
