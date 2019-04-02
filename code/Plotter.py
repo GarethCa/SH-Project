@@ -75,7 +75,7 @@ def segment(image, filename, params, bulk=True, display=False):
     image = copy
     cellList = outputInformation(label_info, filename)
     cellList = clusterTrimmer(cellList)
-    cellList = getInitialCells(cellList)
+    # cellList = getInitialCells(cellList)
 
     if display:
         if bulk:
@@ -120,7 +120,7 @@ def plotImage(image, cellList, filename):
 
 def clusterTrimmer(cellList):
     df = pd.DataFrame.from_records([c.to_dict() for c in cellList])
-    clustering = DBSCAN(eps=20, min_samples=5).fit(df)
+    clustering = DBSCAN(eps=20, min_samples=8).fit(df)
     counter = 0
     for lab in clustering.labels_:
         cellList[counter].setClustered(lab)
@@ -175,7 +175,7 @@ def runForTracking(params, filename=""):
     val = pool.map(runSingle, paramFileList)
 
     listTwo_Val = []
-    for pa in groupedFiles[140:240]:
+    for pa in groupedFiles:
         secondParamList = []
         for fil in pa:
             secondParamList.append((params, "../green_focus/" + fil, False))
@@ -227,7 +227,8 @@ def runForTracking(params, filename=""):
 def threadedCellTrack(lis):
     cellList2 = [item for sublist in lis for item in sublist]
     cellList2 = getInitialCells(cellList2)
-    print(cellList2[0].lastTracked())
+    if(len(cellList2) > 0 ):
+        print(cellList2[0].lastTracked())
     return cellList2
 
 
