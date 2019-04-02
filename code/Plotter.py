@@ -48,8 +48,8 @@ def segment(image, filename, params, bulk=True, display=False):
     # Sets all Values to either black or white.
     copy = image.copy()
     image = ndi.gaussian_filter(image, sigma=1)
-    t= 40
-    # t = threshold_otsu(image)
+    # t= 40
+    t = threshold_otsu(image)
     t = t * params[2]
     image = image > t
 
@@ -75,6 +75,7 @@ def segment(image, filename, params, bulk=True, display=False):
     image = copy
     cellList = outputInformation(label_info, filename)
     cellList = clusterTrimmer(cellList)
+    cellList = getInitialCells(cellList)
 
     if display:
         if bulk:
@@ -119,7 +120,7 @@ def plotImage(image, cellList, filename):
 
 def clusterTrimmer(cellList):
     df = pd.DataFrame.from_records([c.to_dict() for c in cellList])
-    clustering = DBSCAN(eps=30, min_samples=10).fit(df)
+    clustering = DBSCAN(eps=20, min_samples=5).fit(df)
     counter = 0
     for lab in clustering.labels_:
         cellList[counter].setClustered(lab)
