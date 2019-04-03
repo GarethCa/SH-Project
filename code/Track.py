@@ -26,7 +26,7 @@ def getInitialCells(cellData):
                 temp_dist = cellDist(cell, existCell)
                 if temp_dist < dist:
                     dist = temp_dist
-            if dist > 6:
+            if dist > 8:
                 tooClose = False
             if not tooClose:
                 newCell = Cell(num_cells)
@@ -46,7 +46,7 @@ def addCellToTracked(time, newcell, cellList):
     minDist = min(distances)
     index = distances.index(minDist)
     diff = abs(cellList[index].lastTracked() - newcell.lastTracked())
-    if abs(minDist) < 6 and diff > 0:
+    if abs(minDist) < 8 and diff > 0:
         loc = newcell.lastLoc()
         cellList[index].addLocTime(loc.time, loc.x, loc.y, loc.z)
     else:

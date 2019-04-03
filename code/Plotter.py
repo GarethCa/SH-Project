@@ -28,7 +28,7 @@ def removeLabel(label_image, p):
 def outputInformation(labels, filename):
     cellList = []
     counter = 0
-    filename = filename.split("X")[1]
+    filename = f ilename.split("X")[1]
     filename = filename.split(".")[0]
     filename = filename.split("L")
     z = int(filename[1])
@@ -75,7 +75,6 @@ def segment(image, filename, params, bulk=True, display=False):
     image = copy
     cellList = outputInformation(label_info, filename)
     cellList = clusterTrimmer(cellList)
-    # cellList = getInitialCells(cellList)
 
     if display:
         if bulk:
@@ -206,6 +205,7 @@ def runForTracking(params, filename=""):
 
     counter = 0
     for lis in list_for_cells:
+        lis = clusterTrimmer(lis)
         cellLists, discarded = iterateThroughCells(lis, cellLists)
         disca = disca + discarded
         print(counter, len(cellLists), len(disca))
