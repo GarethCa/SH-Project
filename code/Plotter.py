@@ -1,8 +1,10 @@
 from scipy import ndimage as ndi
+import scipy.misc as ms
 from skimage import measure
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
+from PIL import Image
 import os
 import ntpath
 from skimage.feature import peak_local_max
@@ -28,7 +30,7 @@ def removeLabel(label_image, p):
 def outputInformation(labels, filename):
     cellList = []
     counter = 0
-    filename = f ilename.split("X")[1]
+    filename = filename.split("X")[1]
     filename = filename.split(".")[0]
     filename = filename.split("L")
     z = int(filename[1])
@@ -48,30 +50,35 @@ def segment(image, filename, params, bulk=True, display=False):
     # Sets all Values to either black or white.
     copy = image.copy()
     image = ndi.gaussian_filter(image, sigma=1)
-    # t= 40
     t = threshold_otsu(image)
     t = t * params[2]
     image = image > t
+    plt.imsave("../PipelineOutput/3HighTresh.png",image)
 
     image = binary_closing(image)
+    # plt.imsave("../PipelineOutput/4BinClosing.png",image)
     image = erosion(image)
-    # image = binary_opening(image)
+    # plt.imsave('../PipelineOutput/5Erosion.png', image)
     
 
     cleared = clear_border(image)
+    # plt.imsave('../PipelineOutput/6ClearedBorder.png', cleared)
     distance = ndi.distance_transform_edt(image)
+    # plt.imsave("../PipelineOutput/7DistTransform.png",distance)
     local_maxi = peak_local_max(distance, indices=False, footprint=np.ones((params[3], params[3])),
                                 labels=cleared)
+    # plt.imsave("../PipelineOutput/8LocalMaxi.png",local_maxi)
     markers = ndi.label(local_maxi)[0]
     label_im = watershed(-distance, markers, mask=cleared)
-
+    
     label_im_orig = label_im.copy()
     label_info = measure.regionprops(label_im.astype(int))
+    cellList = outputInformation(label_info,filename)
+    
     for p in label_info:
         if p.convex_area < params[0] or p.convex_area > params[1]:
             label_im = removeLabel(label_im, p)
-
-    label_info = measure.regionprops(label_im.astype(int))
+    
     image = copy
     cellList = outputInformation(label_info, filename)
     cellList = clusterTrimmer(cellList)
@@ -106,14 +113,15 @@ def plotImageBulk(image, cellList, filename):
 
 
 def plotImage(image, cellList, filename):
-    fig, axes = plt.subplots(ncols=1, squeeze=True)
-    axes.imshow(image, cmap='gray')
+    fig = plt.figure()
+    ax = plt.Axes(fig,[0.,0.,1.,1.])
+    ax.set_axis_off()
+    fig.add_axes(ax)
+    ax.imshow(image, cmap='gray')
     for c in cellList:
         loc = c.locOverTime[-1]
-        axes.scatter(loc.y, loc.x, color='red', s=2)
-
-    fig.tight_layout()
-    axes.axis('off')
+        ax.scatter(loc.y, loc.x, color='red', s=2)
+    ax.axis('off')
     fig.savefig("../Output/" + ntpath.basename(filename), bbox_inches='tight')
     # plt.close(fig)
 
@@ -246,26 +254,6 @@ def nearestNeighbour(cell, next):
     if best_val > 20:
         return "100000"
     return best_idx
-
-
-def plotImageMethod(image, label_im, label_im_treated,
-                    cleared, centroids, filename):
-    fig, axes = plt.subplots(ncols=2, nrows=2, sharex=True, sharey=True)
-    ax = axes.ravel()
-    ax[0].imshow(image, cmap='binary_r', interpolation='nearest')
-    ax[0].set_title('Original Image')
-    ax[1].imshow(cleared)
-    ax[1].set_title('Otsu Thresholded Image')
-    ax[2].imshow(label_im, cmap='nipy_spectral_r')
-    ax[2].set_title('Segmented Image')
-    ax[3].imshow(image, cmap='gray')
-    for c in centroids:
-        ax[3].scatter(c.centroid[1], c.centroid[0], color='red', s=5)
-    ax[3].set_title('Centroids Found')
-
-    plt.tight_layout()
-    plt.savefig("../Output/" + ntpath.basename(filename), bbox_inches='tight')
-
 
 def chunks(l, n):
     n = max(1, n)
