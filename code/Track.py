@@ -26,7 +26,7 @@ def getInitialCells(cellData):
                 temp_dist = cellDist(cell, existCell)
                 if temp_dist < dist:
                     dist = temp_dist
-            if dist > 8:
+            if dist > 10:
                 tooClose = False
             if not tooClose:
                 newCell = Cell(num_cells)
@@ -46,7 +46,9 @@ def addCellToTracked(time, newcell, cellList):
     minDist = min(distances)
     index = distances.index(minDist)
     diff = abs(cellList[index].lastTracked() - newcell.lastTracked())
-    if abs(minDist) < 8 and diff > 0:
+    if abs(minDist) > 15:
+        return
+    if abs(minDist) < 4 and diff > 0:
         loc = newcell.lastLoc()
         cellList[index].addLocTime(loc.time, loc.x, loc.y, loc.z)
     else:
@@ -88,6 +90,6 @@ def outputData(cellLists):
     text = "SIMI*BIOCELL\n400\n---\n0\n---\n1 1\n0\n---\n"
     for cell in cellLists:
         text += str(cell)
-    txt_output = open("output.txt", 'w')
+    txt_output = open("output.smd", 'w')
     txt_output.write(text)
     txt_output.close()

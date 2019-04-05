@@ -34,6 +34,7 @@ class Cell:
     def addLocTime(self, time, x, y, z):
         self.locOverTime.append(Point(time, x, y, z))
 
+
     def getChildCount(self, daughter):
         if daughter is None:
             return 0

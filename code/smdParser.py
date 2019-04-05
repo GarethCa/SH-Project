@@ -1,43 +1,54 @@
 # Citation Needed for this block of code.
-
+# Adapted from previous year's attempt.
 
 import csv
+from Cell import * 
+import pandas as pd
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
+import numpy as np
 
 
-def getCellsAtTime(time, smdfile=""):
-    smdfile = "newsmdfile.smd"
-    # this is the timepoint where manual tracking started
-    startingPoint = 19
+def parseSMD(smdfile):
+    cellList =  []
     coords = list()
     smd = open(smdfile, "r")
     reader = csv.reader(smd)
     # skips first 8 lines as they're not cells
     for x in range(0, 8):
-        reader.next()
+        next(reader)
 
+    cellCounter = 0
     for line in reader:
         # first 3 lines in cell are just info
         for x in range(0, 3):
-            line = reader.next()
+            line = next(reader)
+        cell = Cell(cellCounter)
         rows = int(line[0])
         # get cell positions
-        for n in range(0, rows):
-            line = reader.next()
-            digits = line[0].split()
-            if int(digits[0]) == int(time) + startingPoint:
-                coords.append([digits[1], digits[2], digits[3]])
+        for coordLine in range(0, rows):
+            line = next(reader)
+            coord = line[0].split()
+            cell.addLocTime(int(coord[0]), int(coord[1])
+                            ,int(coord[2]), int(coord[3]))
+        cellCounter += 1
+        cellList.append(cell)
+        line = next(reader)
+    print(cellList[1614])
+    return cellList
 
-        line = reader.next()
+def plotTrackedCells(cell):
+    locs = cell.locOverTime
+    loc_df = pd.DataFrame.from_records([l.to_dict() for l in locs])
+    fig = plt.figure()
+    ax = fig.add_subplot(111,projection='3d')
+    ax.scatter(loc_df['x'], loc_df['y'],loc_df['z'],c=loc_df['t'])
+    ax.set_xlabel("X Location")
+    ax.set_ylabel("Y Location")
+    ax.set_zlabel("Z Location")
+    ax.set_zlim(0,16)
+    plt.show()
 
-    return coords
-
-
-def getCellsAtTimeAndLayer(time, layer):
-    coords = getCellsAtTime(time)
-    px = []
-    py = []
-    for coord in coords:
-        if coord[2] == str(layer):
-            px.append(int(coord[0]))
-            py.append(int(coord[1]))
-    return px, py
+if __name__ == "__main__":
+    cells = parseSMD("output.smd")
+    plotTrackedCells(cells[1614])

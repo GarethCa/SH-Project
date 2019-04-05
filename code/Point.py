@@ -17,6 +17,12 @@ class Point:
         string = str(self.x) + " " + str(self.y) + " " + str(self.z)
         return string
 
+    def to_dict(self):
+        return {'x': self.x,
+                'y': self.y,
+                'z': self.z,
+                't': self.time}
+
 
 class TimeTuple:
 
