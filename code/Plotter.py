@@ -53,11 +53,10 @@ def segment(image, filename, params, bulk=True, display=False):
     t = threshold_otsu(image)
     t = t * params[2]
     image = image > t
-    plt.imsave("../PipelineOutput/3HighTresh.png",image)
 
     image = binary_closing(image)
     # plt.imsave("../PipelineOutput/4BinClosing.png",image)
-    image = erosion(image)
+    # image = erosion(image)
     # plt.imsave('../PipelineOutput/5Erosion.png', image)
     
 
