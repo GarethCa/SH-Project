@@ -1,7 +1,10 @@
 
 from Point import *
 
+def cellLengthSort(cell):
+    return len(cell.locOverTime)
 
+    
 class Cell:
 
     def __init__(self, ident):

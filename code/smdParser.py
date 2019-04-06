@@ -34,21 +34,25 @@ def parseSMD(smdfile):
         cellCounter += 1
         cellList.append(cell)
         line = next(reader)
-    print(cellList[1614])
     return cellList
 
 def plotTrackedCells(cell):
-    locs = cell.locOverTime
-    loc_df = pd.DataFrame.from_records([l.to_dict() for l in locs])
-    fig = plt.figure()
-    ax = fig.add_subplot(111,projection='3d')
-    ax.scatter(loc_df['x'], loc_df['y'],loc_df['z'],c=loc_df['t'])
-    ax.set_xlabel("X Location")
-    ax.set_ylabel("Y Location")
-    ax.set_zlabel("Z Location")
-    ax.set_zlim(0,16)
-    plt.show()
+    for cell in cells:
+        locs = cell.locOverTime
+        print(len(locs))
+        loc_df = pd.DataFrame.from_records([l.to_dict() for l in locs])
+        fig = plt.figure()
+        ax = fig.add_subplot(111,projection='3d')
+        ax.scatter(loc_df['x'], loc_df['y'],loc_df['z'],c=loc_df['t'])
+        ax.set_xlabel("X Location (Pixels)")
+        ax.set_ylabel("Y Location (Pixels)")
+        ax.set_zlabel("Z Location (Z-Stack")
+        ax.set_zlim(0,16)
+        ax.set_xlim(0,500)
+        ax.set_ylim(0,500)
+        plt.show()
 
 if __name__ == "__main__":
     cells = parseSMD("output.smd")
-    plotTrackedCells(cells[1614])
+    cells.sort(key=cellLengthSort, reverse=True)
+    plotTrackedCells(cells)

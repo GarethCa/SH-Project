@@ -4,7 +4,7 @@ from Cell import *
 def cellDist(cellOne, cellTwo):
     x_dist = abs(cellOne.locOverTime[-1].x - cellTwo.locOverTime[-1].x)
     y_dist = abs(cellOne.locOverTime[-1].y - cellTwo.locOverTime[-1].y)
-    z_dist = abs(cellOne.locOverTime[-1].z - cellTwo.locOverTime[-1].z) *3
+    z_dist = abs(cellOne.locOverTime[-1].z - cellTwo.locOverTime[-1].z) *2
     return (x_dist + y_dist + z_dist)
 
 
@@ -26,7 +26,7 @@ def getInitialCells(cellData):
                 temp_dist = cellDist(cell, existCell)
                 if temp_dist < dist:
                     dist = temp_dist
-            if dist > 10:
+            if dist > 5:
                 tooClose = False
             if not tooClose:
                 newCell = Cell(num_cells)
@@ -46,9 +46,9 @@ def addCellToTracked(time, newcell, cellList):
     minDist = min(distances)
     index = distances.index(minDist)
     diff = abs(cellList[index].lastTracked() - newcell.lastTracked())
-    if abs(minDist) > 15:
+    if abs(minDist) > 10:
         return
-    if abs(minDist) < 4 and diff > 0:
+    if abs(minDist) < 7 and diff > 0:
         loc = newcell.lastLoc()
         cellList[index].addLocTime(loc.time, loc.x, loc.y, loc.z)
     else:
@@ -67,7 +67,7 @@ def cellCleanup(cellList, time):
 
 
 def tooOld(cell, time):
-    return abs((cell.locOverTime[-1].time - time)) >3
+    return abs((cell.locOverTime[-1].time - time)) >2
 
 
 def tooShort(cell, time):
