@@ -14,7 +14,7 @@ class Point:
         self.comment = text
 
     def __str__(self):
-        string = str(self.x) + " " + str(self.y) + " " + str(self.z)
+        string = str(self.time) + " "+str(self.x) + " " + str(self.y) + " " + str(self.z)
         return string
 
     def to_dict(self):
@@ -22,6 +22,12 @@ class Point:
                 'y': self.y,
                 'z': self.z,
                 't': self.time}
+
+    def __lt__(self,other):
+        return self.time < other.time
+    
+    def __eq__(self,other):
+        return self.time == other.time
 
 
 class TimeTuple:

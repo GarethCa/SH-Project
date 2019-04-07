@@ -55,18 +55,11 @@ def segment(image, filename, params, bulk=True, display=False):
     image = image > t
 
     image = binary_closing(image)
-    # plt.imsave("../PipelineOutput/4BinClosing.png",image)
-    # image = erosion(image)
-    # plt.imsave('../PipelineOutput/5Erosion.png', image)
-    
-
     cleared = clear_border(image)
-    # plt.imsave('../PipelineOutput/6ClearedBorder.png', cleared)
     distance = ndi.distance_transform_edt(image)
-    # plt.imsave("../PipelineOutput/7DistTransform.png",distance)
+
     local_maxi = peak_local_max(distance, indices=False, footprint=np.ones((params[3], params[3])),
                                 labels=cleared)
-    # plt.imsave("../PipelineOutput/8LocalMaxi.png",local_maxi)
     markers = ndi.label(local_maxi)[0]
     label_im = watershed(-distance, markers, mask=cleared)
     
@@ -181,6 +174,7 @@ def runForTracking(params, filename=""):
     val = pool.map(runSingle, paramFileList)
 
     listTwo_Val = []
+    # groupedFiles.sort(reverse=True)
     for pa in groupedFiles:
         secondParamList = []
         for fil in pa:
