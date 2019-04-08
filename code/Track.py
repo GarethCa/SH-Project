@@ -1,11 +1,15 @@
 from Cell import *
-
+import math
 
 def cellDist(cellOne, cellTwo):
-    x_dist = abs(cellOne.locOverTime[-1].x - cellTwo.locOverTime[-1].x)
-    y_dist = abs(cellOne.locOverTime[-1].y - cellTwo.locOverTime[-1].y)
-    z_dist = abs(cellOne.locOverTime[-1].z - cellTwo.locOverTime[-1].z) *8
-    return (x_dist + y_dist + z_dist)
+    x_dist = abs(cellOne.locOverTime[-1].x - cellTwo.locOverTime[-1].x) **2
+    y_dist = abs(cellOne.locOverTime[-1].y - cellTwo.locOverTime[-1].y) **2
+    z_dist = (abs(cellOne.locOverTime[-1].z - cellTwo.locOverTime[-1].z) * 4 )** 2
+    return math.sqrt(x_dist + y_dist + z_dist)
+
+def calcVertDist(cellOne,cellTwo):
+    z_dist = abs(cellOne.locOverTime[-1].z - cellTwo.locOverTime[-1].z)
+    return z_dist
 
 
 def getInitialCells(cellData):
@@ -23,10 +27,13 @@ def getInitialCells(cellData):
         else:
             dist = 99999
             for existCell in cellList:
+                vert_dist = calcVertDist(cell,existCell)
+                if vert_dist >1:
+                    continue
                 temp_dist = cellDist(cell, existCell)
                 if temp_dist < dist:
                     dist = temp_dist
-            if dist >10:
+            if dist >15:
                 tooClose = False
             if not tooClose:
                 newCell = Cell(num_cells)
@@ -49,7 +56,7 @@ def addCellToTracked(time, newcell, cellList):
         minDist = min(distances)
         index = distances.index(minDist)
         diff = abs(cellList[index].lastTracked() - newcell.lastTracked())
-        if abs(minDist) >30:
+        if abs(minDist) >25:
             return
         if diff > 0:
             loc = newcell.lastLoc()
@@ -62,6 +69,7 @@ def addCellToTracked(time, newcell, cellList):
     loc = newcell.lastLoc()
     newCell.addLocTime(loc.time, loc.x, loc.y, loc.z)
     cellList.append(newCell)
+
 
 
 def cellCleanup(cellList, time):
