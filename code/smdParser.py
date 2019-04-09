@@ -84,6 +84,6 @@ def findError(output, manual):
 
 if __name__ == "__main__":
     cells = parseSMD(sys.argv[1])
-    cells = cells[int(len(cells)/2):]
+    # cells = cells[int(len(cells)/2):]
     cells.sort(key=cellLengthSort, reverse=True)
     plotTrackedCells(cells)

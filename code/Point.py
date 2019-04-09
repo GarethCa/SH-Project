@@ -17,8 +17,14 @@ class Point:
         string = str(self.time) + " "+str(self.x) + " " + str(self.y) + " " + str(self.z)
         return string
 
+    def to_dict_cluster(self):
+        return {'x': self.x, 
+                'y': self.y,
+                'z': (self.z *15),
+                't': self.time}
+    
     def to_dict(self):
-        return {'x': self.x,
+        return {'x': self.x, 
                 'y': self.y,
                 'z': self.z,
                 't': self.time}

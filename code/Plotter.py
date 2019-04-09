@@ -42,20 +42,37 @@ def outputInformation(labels, filename):
         counter = counter + 1
     return cellList
 
+def outputInfo3D(labels,filename):
+    cellList = []
+    counter = 0
+    filename = filename.split("X")[1]
+    filename = filename.split(".")[0]
+    filename = filename.split("L")
+    time = int(filename[0])
+    for lab in labels:
+        cell = Cell(counter)
+        cell.addLocTime(time,int(lab.centroid[0]), int(lab.centroid[1]), int(lab.centroid[2]))
+        cellList.append(cell)
+        counter = counter + 1
+    return cellList
+    
+
+def preprocessImage(image,params):
+    image = ndi.gaussian_filter(image, sigma=1)
+    t = threshold_otsu(image) * params[2]
+    image = image > t
+
+    image = binary_closing(image)
+    cleared = clear_border(image)
+    return cleared
 
 def segment(image, filename, params, bulk=True, display=False):
 
     if (image == 0).all():
         return ""
-    # Sets all Values to either black or white.
     copy = image.copy()
-    image = ndi.gaussian_filter(image, sigma=1)
-    t = threshold_otsu(image)
-    t = t * params[2]
-    image = image > t
+    cleared =  preprocessImage(image,params)
 
-    image = binary_closing(image)
-    cleared = clear_border(image)
     distance = ndi.distance_transform_edt(image)
 
     local_maxi = peak_local_max(distance, indices=False, footprint=np.ones((params[3], params[3])),
@@ -65,7 +82,6 @@ def segment(image, filename, params, bulk=True, display=False):
     
     label_im_orig = label_im.copy()
     label_info = measure.regionprops(label_im.astype(int))
-    cellList = outputInformation(label_info,filename)
     
     for p in label_info:
         if p.convex_area < params[0] or p.convex_area > params[1]:
@@ -93,6 +109,42 @@ def segment(image, filename, params, bulk=True, display=False):
         return cellList
 
 
+def segment3D(filename, params, bulk=True, display=False):
+    images = []
+    for fil in filename:
+        image = cv2.imread(fil,0)
+        if image.shape == None:
+            image = images[-1]
+        else:
+            try:
+                cleared =  preprocessImage(image,params)
+            except ValueError:
+                continue
+            images.append(cleared)
+    image = np.dstack(images)
+    distance = ndi.distance_transform_edt(image)
+
+    local_max = peak_local_max(distance, indices=False, min_distance=100,
+        labels=image, footprint=np.ones((int(params[3]),int(params[3]),2)))
+    markers = ndi.label(local_max)[0]
+    label_im = watershed(-distance, markers, mask=image)
+    
+    label_im_orig = label_im.copy()
+    label_info = measure.regionprops(label_im.astype(int))
+    for p in label_info:
+        
+        if p.area < params[0]*10 or p.area > params[1] *10:
+            # print("-------")
+            # print(p.area, len(label_info))
+            label_im = removeLabel(label_im, p)
+            # print(len(label_info))
+            # print("-------")
+    cellList = outputInfo3D(label_info, filename[0])
+    cellList = clusterTrimmer(cellList)
+    print("Finished processing {}, found {} cells.".format(filename[0],len(cellList)))
+    return cellList
+
+
 def plotImageBulk(image, cellList, filename):
     fig, axes = plt.subplots(ncols=1, sharex=True, sharey=True)
     axes.imshow(image, cmap='gray')
@@ -118,7 +170,7 @@ def plotImage(image, cellList, filename):
     # plt.close(fig)
 
 def clusterTrimmer(cellList):
-    df = pd.DataFrame.from_records([c.to_dict() for c in cellList])
+    df = pd.DataFrame.from_records([c.to_dict_cluster() for c in cellList])
     clustering = DBSCAN(eps=20, min_samples=8).fit(df)
     counter = 0
     for lab in clustering.labels_:
@@ -126,7 +178,6 @@ def clusterTrimmer(cellList):
         counter += 1
     cellList = [cell for cell in cellList if cell.clustered > -1]
     return cellList
-    
 
 def runSingle(argTuple):
     params = argTuple[0]
@@ -138,6 +189,9 @@ def runSingle(argTuple):
     else:
         return "\n"
 
+def run3D(argTuple, files):
+    params = argTuple
+    return segment3D(files, params)
 
 def runOnT(params, filename="", display=True):
     if filename is not "":
@@ -155,6 +209,13 @@ def runOnT(params, filename="", display=True):
     pool.close()
     pool.join()
 
+def mult3DSeg(tup):
+    pa = tup[0]
+    params = tup[1]
+    secondParamList = []
+    pa = ["../green_focus/"+f for f in pa]
+    cells = run3D(params,pa)
+    return cells
 
 def runForTracking(params, filename=""):
     if filename is not "":
@@ -162,50 +223,39 @@ def runForTracking(params, filename=""):
     else:
         files = os.listdir("../green_focus/")
     files = sorted(files)
-    filesFirst = [f for f in files if f.startswith("X000")]
-    [f for f in files if (not f.startswith("X000"))]
-    paramFileList = []
     groupedFiles = [list(g) for k, g in groupby(files, key=lambda x: x[:4])]
-    for fil in filesFirst:
-        paramFileList.append((params, "../green_focus/" + fil, False))
-
+    
     pool = Pool()
     t0 = time()
-    val = pool.map(runSingle, paramFileList)
-
-    listTwo_Val = []
     # groupedFiles.sort(reverse=True)
-    for pa in groupedFiles:
-        secondParamList = []
-        for fil in pa:
-            secondParamList.append((params, "../green_focus/" + fil, False))
-        print(secondParamList[0])
-        two_val = pool.map(runSingle, secondParamList)
-        listTwo_Val.append(two_val)
+    # for pa in groupedFiles:
+    #     secondParamList = []
+    #     for fil in pa:
+    #         secondParamList.append((params, "../green_focus/" + fil, False))
+    #     print(secondParamList[0])
+    #     two_val = pool.map(runSingle, secondParamList)
+    #     listTwo_Val.append(two_val)
+
+    paramList = []
+    for group in groupedFiles:
+        paramList.append((group,params))
+    listsOfCells = pool.map(mult3DSeg,paramList)
+        
     t1 = time()
 
     pool.close()
     pool.join()
 
     print("Detection Complete, took {} seconds".format(t1-t0))
-    cellList = [item for sublist in val for item in sublist]
-    cellLists = getInitialCells(cellList)
+    cellLists = listsOfCells[0]
 
     print("Length of cells found in first", len(cellLists))
 
     t0 = time()
     disca = []
 
-    pool = Pool()
-    t0 = time()
-    val = pool.map(runSingle, paramFileList)
-    list_for_cells = pool.map(threadedCellTrack, listTwo_Val)
-    t1 = time()
-    pool.close()
-    pool.join()
-
     counter = 0
-    for lis in list_for_cells:
+    for lis in listsOfCells[1:]:
         lis = clusterTrimmer(lis)
         cellLists, discarded = iterateThroughCells(lis, cellLists)
         disca = disca + discarded

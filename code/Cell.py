@@ -51,6 +51,12 @@ class Cell:
         return {'x': loc.x,
                 'y': loc.y,
                 'z': loc.z}
+    
+    def to_dict_cluster(self):
+        loc = self.locOverTime[-1]
+        return {'x': loc.x,
+                'y': loc.y,
+                'z': (loc.z * 15)}
 
     def setClustered(self, cluster):
         self.clustered = cluster
