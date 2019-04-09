@@ -5,6 +5,7 @@ import csv
 from Cell import * 
 import sys
 import pandas as pd
+import random
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import numpy as np
@@ -86,4 +87,5 @@ if __name__ == "__main__":
     cells = parseSMD(sys.argv[1])
     # cells = cells[int(len(cells)/2):]
     cells.sort(key=cellLengthSort, reverse=True)
+    # random.shuffle(cells)
     plotTrackedCells(cells)

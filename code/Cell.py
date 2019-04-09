@@ -2,7 +2,7 @@
 from Point import *
 
 def cellLengthSort(cell):
-    return len(cell.locOverTime)
+    return abs(cell.locOverTime[-1].time - cell.locOverTime[0].time)
 
     
 class Cell:
@@ -74,7 +74,7 @@ class Cell:
         rep += ("{}\n".format(len(self.locOverTime)))
         for p in self.locOverTime:
             rep += ("{} {} {} {} -1 -1 -1 {}\n".format(p.time,
-                                                       p.x, p.y, p.z, p.comment))
+                                                       p.y, p.x, p.z, p.comment))
         if self.daughterL != None:
             rep += str(self.daughterL)
         if self.daughterR != None:
