@@ -101,8 +101,6 @@ threshSelector.grid(row=5, column=1)
 
 ###################################################
 
-progBar = Progressbar(window, length=400).grid(row=7, column=0, columnspan=4)
-
 imLabel = Label(image=photo)
 imLabel.image = photo
 imLabel.grid(row=0, column=4, columnspan=3, rowspan=20)
@@ -111,9 +109,9 @@ textForDir = StringVar()
 
 xSelect = Scale(window, from_=0, to=200, orient=HORIZONTAL, length=400)
 xSelect.grid(row=17, column=0, columnspan=4)
-xSelLabel = Label(window, text="X Level").grid(row=16, column=0)
+xSelLabel = Label(window, text="Time").grid(row=16, column=0)
 lSelect = Scale(window, from_=0, to=200, orient=HORIZONTAL, length=400)
-lSelLabel = Label(window, text="L Level").grid(row=18, column=0)
+lSelLabel = Label(window, text="Z-Depth").grid(row=18, column=0)
 lSelect.grid(row=19, column=0, columnspan=4)
 xSelect.config(command=lambda x: changeFunc(imLabel, xSelect, lSelect))
 lSelect.config(command=lambda x: changeFunc(imLabel, xSelect, lSelect))

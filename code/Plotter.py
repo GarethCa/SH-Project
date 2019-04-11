@@ -14,6 +14,7 @@ from skimage.morphology import *
 from multiprocessing import Pool
 from VideoGen import *
 from Cell import *
+from smdParser import plotDetectedCells
 from Track import getInitialCells, iterateThroughCells, outputData, tooShort
 from time import time
 from itertools import groupby
@@ -26,6 +27,12 @@ def removeLabel(label_image, p):
     label_image[match] = 0
     return label_image
 
+def plotWatershed(image):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    axee= ax.imshow(image, cmap=plt.cm.nipy_spectral, interpolation='nearest')
+    plt.colorbar(axee)
+    plt.savefig("../Output/watershed.png")
 
 def outputInformation(labels, filename):
     cellList = []
@@ -71,6 +78,7 @@ def segment(image, filename, params, bulk=True, display=False):
     if (image == 0).all():
         return ""
     copy = image.copy()
+    plotStack(copy)
     cleared =  preprocessImage(image,params)
 
     distance = ndi.distance_transform_edt(image)
@@ -82,6 +90,7 @@ def segment(image, filename, params, bulk=True, display=False):
     
     label_im_orig = label_im.copy()
     label_info = measure.regionprops(label_im.astype(int))
+    plotWatershed(label_im)
     
     for p in label_info:
         if p.convex_area < params[0] or p.convex_area > params[1]:
@@ -90,7 +99,6 @@ def segment(image, filename, params, bulk=True, display=False):
     image = copy
     cellList = outputInformation(label_info, filename)
     cellList = clusterTrimmer(cellList)
-
     if display:
         if bulk:
             del label_im
@@ -132,15 +140,10 @@ def segment3D(filename, params, bulk=True, display=False):
     label_im_orig = label_im.copy()
     label_info = measure.regionprops(label_im.astype(int))
     for p in label_info:
-        
         if p.area < params[0]*10 or p.area > params[1] *10:
-            # print("-------")
-            # print(p.area, len(label_info))
             label_im = removeLabel(label_im, p)
-            # print(len(label_info))
-            # print("-------")
     cellList = outputInfo3D(label_info, filename[0])
-    cellList = clusterTrimmer(cellList)
+    # cellList = clusterTrimmer(cellList)
     print("Finished processing {}, found {} cells.".format(filename[0],len(cellList)))
     return cellList
 
@@ -227,15 +230,6 @@ def runForTracking(params, filename=""):
     
     pool = Pool()
     t0 = time()
-    # groupedFiles.sort(reverse=True)
-    # for pa in groupedFiles:
-    #     secondParamList = []
-    #     for fil in pa:
-    #         secondParamList.append((params, "../green_focus/" + fil, False))
-    #     print(secondParamList[0])
-    #     two_val = pool.map(runSingle, secondParamList)
-    #     listTwo_Val.append(two_val)
-
     paramList = []
     for group in groupedFiles:
         paramList.append((group,params))

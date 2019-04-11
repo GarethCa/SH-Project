@@ -13,14 +13,13 @@ class Cell:
         self.daughterR = None
         self.locOverTime = []
         self.clustered = -1
-        self.alive = True
 
-    def mitosis(self):
-        self.daughterL = Cell(id+"L")
-        self.daughterR = Cell(id+"R")
+    def mitosis(self,left,right):
+        self.daughterL = left
+        self.daughterR = right
 
     def death(self):
-        self.alive = False
+        self.locOverTime[-1].comment = "Cell has Died"
 
     def lastTracked(self):
         return self.locOverTime[-1].time
