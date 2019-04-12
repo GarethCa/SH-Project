@@ -182,15 +182,38 @@ def avPointDifference(manCell, autoCell, compute=True):
 def pointDist(pointOne, pointTwo):
     x_dist = abs(pointOne.x - pointTwo.x) **2
     y_dist = abs(pointOne.y - pointTwo.y) **2
-    z_dist = (abs(pointOne.z - pointTwo.z) *2 )** 2
+    z_dist = (abs(pointOne.z - pointTwo.z) )** 2
     return math.sqrt(x_dist + y_dist + z_dist)
 
-def findError(output, manual):
+def findErrorTracking(output, manual):
     errorfile = open("error.csv",'w')
     outputCells = parseSMD(output)
     manualCells = parseSMD(manual)
     errorfile.write("MatchNumber,AverageError,ManualLength,AutoLength,CellOverlap\n")
     matchedCells = matchCells(manualCells, outputCells, 19, errorfile)
+
+def findErrorDetection(output,manual, time=369):
+    errorfile = open("errorDet.csv",'w')
+    errorfile.write("Time,TotalError,AverageError,ManTrackedCells,AutoTrackedCells\n")
+    outputCells = parseSMD(output)
+    manualCells = parseSMD(manual)
+    for t in range(0,time):
+        counter = 0
+        manLocsT = getListOfPointsAtTime(manualCells,t+19)
+        outLocsT = getListOfPointsAtTime(outputCells,t)
+        error = 0
+        avError = 0
+        if len(manLocsT) > 0 and len(outLocsT) > 0:
+            for loc in manLocsT:
+                distances = [pointDist(loc,l) for l in outLocsT]
+                minDist = min(distances)
+                error += minDist
+                counter += 1
+            avError = error/counter
+        print("{},{},{},{},{}\n".format(t,error,avError,len(manLocsT), len(outLocsT)))
+        errorfile.write("{},{},{},{},{}\n".format(t,error,avError,len(manLocsT), len(outLocsT)))
+
+
 
 def plotMatchCells(matchTuples):
     for tup in matchTuples:
@@ -214,9 +237,10 @@ if __name__ == "__main__":
     cells = parseSMD(sys.argv[1])
     # cells = cells[int(len(cells)/2):]
     cells = [cell for cell in cells if len(cell.locOverTime) >0]
-    # cells.sort(key=cellLengthSort, reverse=True)
-    random.shuffle(cells)
-    plotTrackedCells(cells)
+    cells.sort(key=cellLengthSort, reverse=True)
+    # random.shuffle(cells)
+    # plotTrackedCells(cells)
     
     # plotCellsAtATime(cells,369)
-    findError(sys.argv[1],sys.argv[2])
+    # findError(sys.argv[1],sys.argv[2])
+    findErrorDetection(sys.argv[1],sys.argv[2])

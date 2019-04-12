@@ -78,7 +78,6 @@ def segment(image, filename, params, bulk=True, display=False):
     if (image == 0).all():
         return ""
     copy = image.copy()
-    plotStack(copy)
     cleared =  preprocessImage(image,params)
 
     distance = ndi.distance_transform_edt(image)
@@ -90,7 +89,6 @@ def segment(image, filename, params, bulk=True, display=False):
     
     label_im_orig = label_im.copy()
     label_info = measure.regionprops(label_im.astype(int))
-    plotWatershed(label_im)
     
     for p in label_info:
         if p.convex_area < params[0] or p.convex_area > params[1]:

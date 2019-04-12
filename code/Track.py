@@ -85,7 +85,7 @@ def cellCleanup(cellList, time):
 
 
 def tooOld(cell, time):
-    return abs((cell.locOverTime[-1].time - time)) >2
+    return abs((cell.locOverTime[-1].time - time)) >3
 
 
 def tooShort(cell, time):
