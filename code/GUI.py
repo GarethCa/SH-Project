@@ -58,7 +58,7 @@ def genMovie(filename):
     params = [int(lbSelector.get()), int(hbSelector.get()),
               float(threshSelector.get()), int(fpSelector.get())]
     runOnT(params, filename)
-    makeVideo()
+    # makeVideo()
 
 
 def runTracking(fileName):

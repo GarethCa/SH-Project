@@ -15,7 +15,7 @@ from multiprocessing import Pool
 from VideoGen import *
 from Cell import *
 from smdParser import plotDetectedCells
-from Track import getInitialCells, iterateThroughCells, outputData, tooShort
+from Track import  iterateThroughCells, outputData, tooShort
 from time import time
 from itertools import groupby
 from sklearn.cluster import DBSCAN
@@ -75,34 +75,36 @@ def preprocessImage(image,params):
 
 def segment(image, filename, params, bulk=True, display=False):
 
+    # Preprocess Image
     if (image == 0).all():
         return ""
     copy = image.copy()
     cleared =  preprocessImage(image,params)
-
     distance = ndi.distance_transform_edt(image)
 
+    # Perform Watershed Segmentation.
     local_maxi = peak_local_max(distance, indices=False, footprint=np.ones((params[3], params[3])),
                                 labels=cleared)
     markers = ndi.label(local_maxi)[0]
     label_im = watershed(-distance, markers, mask=cleared)
-    
     label_im_orig = label_im.copy()
     label_info = measure.regionprops(label_im.astype(int))
     
+    # Filter out Cells.
     for p in label_info:
         if p.convex_area < params[0] or p.convex_area > params[1]:
             label_im = removeLabel(label_im, p)
-    
     image = copy
     cellList = outputInformation(label_info, filename)
     cellList = clusterTrimmer(cellList)
+
+    # Output.
     if display:
         if bulk:
             del label_im
             del label_im_orig
             del cleared
-            plotImageBulk(image, cellList, filename)
+            plotImage(image, cellList, filename)
         else:
             plotImage(
                 image,
@@ -115,7 +117,10 @@ def segment(image, filename, params, bulk=True, display=False):
         return cellList
 
 
+# Segment 3D Images
 def segment3D(filename, params, bulk=True, display=False):
+
+    # Create 3D Images
     images = []
     for fil in filename:
         image = cv2.imread(fil,0)
@@ -130,33 +135,27 @@ def segment3D(filename, params, bulk=True, display=False):
     image = np.dstack(images)
     distance = ndi.distance_transform_edt(image)
 
+    # Pre-Processess and Label via Watershed.
     local_max = peak_local_max(distance, indices=False, min_distance=100,
         labels=image, footprint=np.ones((int(params[3]),int(params[3]),2)))
     markers = ndi.label(local_max)[0]
     label_im = watershed(-distance, markers, mask=image)
     
+    # Filter
     label_im_orig = label_im.copy()
     label_info = measure.regionprops(label_im.astype(int))
     for p in label_info:
         if p.area < params[0]*10 or p.area > params[1] *10:
             label_im = removeLabel(label_im, p)
     cellList = outputInfo3D(label_info, filename[0])
-    # cellList = clusterTrimmer(cellList)
+    cellList = clusterTrimmer(cellList)
+
+    # Output
     print("Finished processing {}, found {} cells.".format(filename[0],len(cellList)))
     return cellList
 
 
-def plotImageBulk(image, cellList, filename):
-    fig, axes = plt.subplots(ncols=1, sharex=True, sharey=True)
-    axes.imshow(image, cmap='gray')
-    for c in centroids:
-        loc = c.locOverTime[-1]
-        axes.scatter(loc.x, loc.y, color='red', s=2)
-
-    fig.savefig("../Output/" + ntpath.basename(filename), bbox_inches='tight')
-    plt.close()
-
-
+# Output Cell Images for Preview and Video.
 def plotImage(image, cellList, filename):
     fig = plt.figure()
     ax = plt.Axes(fig,[0.,0.,1.,1.])
@@ -168,8 +167,9 @@ def plotImage(image, cellList, filename):
         ax.scatter(loc.y, loc.x, color='red', s=2)
     ax.axis('off')
     fig.savefig("../Output/" + ntpath.basename(filename), bbox_inches='tight')
-    # plt.close(fig)
+    plt.close(fig)
 
+#  Remove Clustered Objects
 def clusterTrimmer(cellList):
     df = pd.DataFrame.from_records([c.to_dict_cluster() for c in cellList])
     clustering = DBSCAN(eps=20, min_samples=8).fit(df)
@@ -180,6 +180,7 @@ def clusterTrimmer(cellList):
     cellList = [cell for cell in cellList if cell.clustered > -1]
     return cellList
 
+# Segment a single image.
 def runSingle(argTuple):
     params = argTuple[0]
     filename = argTuple[1]
@@ -190,10 +191,12 @@ def runSingle(argTuple):
     else:
         return "\n"
 
+# Helper function for 3D segmentation.
 def run3D(argTuple, files):
     params = argTuple
     return segment3D(files, params)
 
+# Run Segmentation over Time for Video Output.
 def runOnT(params, filename="", display=True):
     if filename is not "":
         files = os.listdir(str(filename.get()))
@@ -204,12 +207,10 @@ def runOnT(params, filename="", display=True):
     paramFileList = []
     for fil in files:
         paramFileList.append((params, "../green_focus/" + fil, display))
-    pool = Pool()
-    pool.map(runSingle, paramFileList)
+    for par in paramFileList:
+        runSingle(par)
 
-    pool.close()
-    pool.join()
-
+# Multithread 3D dection Enabler.
 def mult3DSeg(tup):
     pa = tup[0]
     params = tup[1]
@@ -219,6 +220,8 @@ def mult3DSeg(tup):
     return cells
 
 def runForTracking(params, filename=""):
+
+    # Loads the Files in Directory
     if filename is not "":
         files = os.listdir(str(filename.get()))
     else:
@@ -226,15 +229,14 @@ def runForTracking(params, filename=""):
     files = sorted(files)
     groupedFiles = [list(g) for k, g in groupby(files, key=lambda x: x[:4])]
     
+    # Multithreading - Detects Cells
     pool = Pool()
     t0 = time()
     paramList = []
     for group in groupedFiles:
         paramList.append((group,params))
-    listsOfCells = pool.map(mult3DSeg,paramList)
-        
+    listsOfCells = pool.map(mult3DSeg,paramList) 
     t1 = time()
-
     pool.close()
     pool.join()
 
@@ -246,6 +248,7 @@ def runForTracking(params, filename=""):
     t0 = time()
     disca = []
 
+    # Link cells in tracking.
     counter = 0
     for lis in listsOfCells[1:]:
         lis = clusterTrimmer(lis)
@@ -253,11 +256,13 @@ def runForTracking(params, filename=""):
         disca = disca + discarded
         print(counter, len(cellLists), len(disca))
         counter += 1
-
     t1 = time()
+    
+    # Re-add Dead Cells. - Filter away short cells.
     cellLists = cellLists + disca
     cellLists = [x for x in cellLists if not tooShort(x, 10)]
 
+    # Output Data
     cellLists.sort(key=cellSort)
     counter = 0
     for cell in cellLists:
@@ -267,39 +272,5 @@ def runForTracking(params, filename=""):
     outputData(cellLists)
 
 
-def threadedCellTrack(lis):
-    cellList2 = [item for sublist in lis for item in sublist]
-    cellList2 = getInitialCells(cellList2)
-    if(len(cellList2) > 0 ):
-        print(cellList2[0].lastTracked())
-    return cellList2
-
-
-def nearestNeighbour(cell, next):
-    best_val = 1000000
-    best_idx = 0
-    idx = 0
-    for n in next:
-        cur_val = cellDist(cell, n)
-        if cur_val < best_val:
-            best_val = cur_val
-            best_idx = idx
-        idx += 1
-
-    if best_val > 20:
-        return "100000"
-    return best_idx
-
-def chunks(l, n):
-    n = max(1, n)
-    return [l[i:i+n] for i in xrange(0, len(l), n)]
-
-
 def cellSort(cell):
     return cell.locOverTime[0].time
-
-
-if __name__ == "__main__":
-    params = [10, 70, 1.2, 4]
-    runOnT(params, display=True)
-    makeVideo()

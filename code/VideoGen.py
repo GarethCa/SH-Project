@@ -1,7 +1,7 @@
 import cv2
 import os
 
-
+# Creates an output video.
 def makeVideo():
     files = os.listdir("../Output/")
     files = sorted(files, key=lambda item: (int(item.partition(' ')[0])

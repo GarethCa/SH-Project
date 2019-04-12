@@ -17,39 +17,7 @@ def calcHorDist(cellOne, cellTwo):
     return math.sqrt(x_dist + y_dist)
 
 
-def getInitialCells(cellData):
-    cellList = []
-    counter = 0
-    num_cells = 0
-    for cell in cellData:
-        tooClose = True
-        if len(cellList) == 0:
-            newCell = Cell(num_cells)
-            loc = cell.lastLoc()
-            newCell.addLocTime(loc.time, loc.x, loc.y, loc.z)
-            cellList.append(newCell)
-            num_cells += 1
-        else:
-            dist = 99999
-            for existCell in cellList:
-                temp_dist = cellDist(cell, existCell)
-                if temp_dist < dist:
-                    dist = temp_dist
-                    vert_dist = calcVertDist(cell,existCell)
-                    hor_dist = calcHorDist(cell,existCell)
-            if hor_dist >15 and vert_dist <2 :
-                tooClose = False
-            if not tooClose:
-                newCell = Cell(num_cells)
-                loc = cell.lastLoc()
-                newCell.addLocTime(loc.time, loc.x, loc.y, loc.z)
-                cellList.append(newCell)
-                num_cells += 1
-        counter += 1
-    print(len(cellList))
-    return cellList
-
-
+# Add a given cell to tracking info.
 def addCellToTracked(time, newcell, cellList):
     distances = []
     counter =  0
@@ -75,8 +43,6 @@ def addCellToTracked(time, newcell, cellList):
         counter +=1
     
 
-
-
 def cellCleanup(cellList, time):
     discarded = [x for x in cellList if tooOld(x, time)]
     lis = cellList
@@ -92,6 +58,7 @@ def tooShort(cell, time):
     return len(cell.locOverTime) < time
 
 
+# Add new cellsto cell List.
 def iterateThroughCells(cells, cellList):
     if len(cells) == 0:
         return cellList, []
@@ -99,14 +66,14 @@ def iterateThroughCells(cells, cellList):
     for cell in cells:
         addCellToTracked(1, cell, cellList)
     cellLis, discarded = cellCleanup(cellList, time)
-    # print(len(cellList))
     return cellLis, discarded
 
 
+# Output Framework for Lists of Cells.
 def outputData(cellLists):
     text = "SIMI*BIOCELL\n400\n---\n0\n---\n1 1\n0\n---\n"
     for cell in cellLists:
         text += str(cell)
-    txt_output = open("output.smd", 'w')
+    txt_output = open("../Output/output.smd", 'w')
     txt_output.write(text)
     txt_output.close()

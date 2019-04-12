@@ -34,9 +34,3 @@ class Point:
     
     def __eq__(self,other):
         return self.time == other.time
-
-
-class TimeTuple:
-
-    def __init__(self, point, time):
-        self.val = (point, time)

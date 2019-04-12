@@ -1,6 +1,3 @@
-# Citation Needed for this block of code.
-# Adapted from previous year's attempt.
-
 import csv
 from Cell import * 
 import sys
@@ -15,20 +12,19 @@ import numpy as np
 def parseSMD(smdfile):
     cellList =  []
     coords = list()
+    # Skip first 8 lines as they are SIMI Biocell Metadata
     smd = open(smdfile, "r")
     reader = csv.reader(smd)
-    # skips first 8 lines as they're not cells
     for x in range(0, 8):
         next(reader)
-
     cellCounter = 0
     for line in reader:
-        # first 3 lines in cell are just info
+        # Ignore first few lines of input as they are cell metadata.
         for x in range(0, 3):
             line = next(reader)
         cell = Cell(cellCounter)
         rows = int(line[0])
-        # get cell positions
+        # Obtain Cell Postitions
         for coordLine in range(0, rows):
             line = next(reader)
             coord = line[0].split()
@@ -44,7 +40,7 @@ def parseSMD(smdfile):
 def plotTrackedCells(cell):
     for cell in cells:
         if len(cell.locOverTime) >0:
-            print(len(cell.locOverTime))
+            # 3D Plot
             locs = cell.locOverTime
             loc_df = pd.DataFrame.from_records([l.to_dict() for l in locs])
             fig = plt.figure()
@@ -58,6 +54,7 @@ def plotTrackedCells(cell):
             ax.set_ylim(0,500)
             plt.colorbar(axeee)
             plt.show()
+            # 2D Plot
             fig = plt.figure()
             ax = fig.add_subplot(111)
             axeee =ax.scatter(loc_df['x'], loc_df['y'],c=loc_df['t'])
@@ -68,7 +65,7 @@ def plotTrackedCells(cell):
             plt.colorbar(axeee)
             plt.show()
 
-
+# Plot all Cells
 def plotDetectedCells(cells):
     locs = pd.DataFrame.from_records([c.to_dict() for c in cells])
     fig = plt.figure()
@@ -89,6 +86,7 @@ def plotCellsAtATime(cells,length):
         if len(cellAtT) > 0:
             plotDetectedCells(cellAtT)
 
+# Get all cells found at time t.
 def getCellAtT(cells,t):
     cellAtT = []
     pointsAtT = []
@@ -100,6 +98,7 @@ def getCellAtT(cells,t):
             pointsAtT.append(Point(locAtTime.time,locAtTime.x,locAtTime.y,locAtTime.z))
     return cellAtT, pointsAtT
 
+# Get a list of all the points which are occupied at time T.
 def getListOfPointsAtTime(cells,t):
     cellAtT = []
     for cell in cells:
@@ -109,31 +108,37 @@ def getListOfPointsAtTime(cells,t):
             cellAtT.append(Point(locAtTime.time,locAtTime.x,locAtTime.y,locAtTime.z))
     return cellAtT
 
+# Find matching time locations.
 def checkForTime(locs,time):
     for point in locs:
         if point.time == time:
             return point
     return None
 
+# Interpolate the Movement of Cells provided from data.
 def interpolatePoints(cell):
     locs = cell.locOverTime
     additionaltimes = []
+    # Check every entry for missed time steps.
     for x in range(0,len(locs) -1):
         time = locs[x].time
         diff = locs[x +1].time - locs[x].time
         x_movement = (locs[x+1].x - locs[x].x) / diff
         y_movement = (locs[x+1].y - locs[x].y)/ diff
         z_movement = (locs[x+1].z - locs[x].z) / diff
+        # If cell tracking is missed for a frame or more, interpolate.
         if diff > 1:
             for d in range(1,diff):
                 newx = int(x_movement *d + locs[x].x)
                 newy = int(y_movement *d + locs[x].y)
                 newz = int(z_movement *d + locs[x].z)
                 additionaltimes.append(Point(time+d, newx, newy, newz))
+    # Return interpolated results.
     locs = locs + additionaltimes
     locs.sort()
     return locs
 
+# Find the Best Matches for all Manual Cells in our Automated Cell Data.
 def matchCells(manual, auto, offset, errorfile):
     matchedCells = []
     numMan = len(manual)
@@ -153,6 +158,7 @@ def matchCells(manual, auto, offset, errorfile):
             errorfile.write("{},{},{},{},{}\n".format(len(matchedCells),outputDist,len(match.locOverTime),len(manCell.locOverTime),overlap))
     return matchedCells
 
+# Count how many time overlaps exist.
 def cellOverlap(man, auto):
     counter = 0
     auto_locs = auto.locOverTime
@@ -162,6 +168,7 @@ def cellOverlap(man, auto):
                 counter += 1
     return counter
 
+# Calculate average distance between like points.
 def avPointDifference(manCell, autoCell, compute=True):
     auto_locs = autoCell.locOverTime
     counter = 0
@@ -185,6 +192,7 @@ def pointDist(pointOne, pointTwo):
     z_dist = (abs(pointOne.z - pointTwo.z) )** 2
     return math.sqrt(x_dist + y_dist + z_dist)
 
+# Generate Metrics for Tracking.
 def findErrorTracking(output, manual):
     errorfile = open("error.csv",'w')
     outputCells = parseSMD(output)
@@ -192,6 +200,7 @@ def findErrorTracking(output, manual):
     errorfile.write("MatchNumber,AverageError,ManualLength,AutoLength,CellOverlap\n")
     matchedCells = matchCells(manualCells, outputCells, 19, errorfile)
 
+# Generate Metrics for Cell Detection.
 def findErrorDetection(output,manual, time=369):
     errorfile = open("errorDet.csv",'w')
     errorfile.write("Time,TotalError,AverageError,ManTrackedCells,AutoTrackedCells\n")
@@ -214,7 +223,7 @@ def findErrorDetection(output,manual, time=369):
         errorfile.write("{},{},{},{},{}\n".format(t,error,avError,len(manLocsT), len(outLocsT)))
 
 
-
+# Plot Matching Cells Together.
 def plotMatchCells(matchTuples):
     for tup in matchTuples:
         man_locs = tup[0].locOverTime
@@ -234,13 +243,19 @@ def plotMatchCells(matchTuples):
         plt.show()
 
 if __name__ == "__main__":
-    cells = parseSMD(sys.argv[1])
-    # cells = cells[int(len(cells)/2):]
-    cells = [cell for cell in cells if len(cell.locOverTime) >0]
-    cells.sort(key=cellLengthSort, reverse=True)
-    # random.shuffle(cells)
-    # plotTrackedCells(cells)
-    
-    # plotCellsAtATime(cells,369)
-    # findError(sys.argv[1],sys.argv[2])
-    findErrorDetection(sys.argv[1],sys.argv[2])
+    options = int(sys.argv[1])
+    # Plot Tracked
+    if options == 1:
+        cells = parseSMD(sys.argv[2])
+        cells = [cell for cell in cells if len(cell.locOverTime) >0]
+        cells.sort(key=cellLengthSort, reverse=True)
+        plotTrackedCells(cells)
+    # Plot all Cells at Given Time.
+    else if options ==2:
+        cells = parseSMD(sys.argv[2])
+        cells = [cell for cell in cells if len(cell.locOverTime) >0]
+        plotCellsAtATime(cells,int(sys.argv[3]))
+    # Find Error Metrics.
+    else:
+        findError(sys.argv[2],sys.argv[3])
+        findErrorDetection(sys.argv[2],sys.argv[3])

@@ -60,6 +60,7 @@ class Cell:
     def setClustered(self, cluster):
         self.clustered = cluster
 
+    # Overwritten String Representation for Outputting.
     def __str__(self):
         if len(self.locOverTime) > 0:
             birth = self.locOverTime[0].time - 1
