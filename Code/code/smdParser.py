@@ -251,7 +251,7 @@ if __name__ == "__main__":
         cells.sort(key=cellLengthSort, reverse=True)
         plotTrackedCells(cells)
     # Plot all Cells at Given Time.
-    else if options ==2:
+    elif options ==2:
         cells = parseSMD(sys.argv[2])
         cells = [cell for cell in cells if len(cell.locOverTime) >0]
         plotCellsAtATime(cells,int(sys.argv[3]))
