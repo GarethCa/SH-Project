@@ -17,15 +17,23 @@ The aim of this project is to provide a program to be used by the Biology Depart
 
 ## Solution
 1. First load a Z-Stack of 2D Cell Microscopy Images.
+
+
 ![z stack](https://github.com/GarethCa/SH-Project/blob/master/CellTrackerImages/Capture.PNG)
 
 2. Detect cells within a particular time in 3D space.
+
+
 ![detected cells](https://github.com/GarethCa/SH-Project/blob/master/CellTrackerImages/sf.PNG)
 
 3. Optionally Output the cells tracked over time as a video.
+
+
 ![Gif for Output](https://github.com/GarethCa/SH-Project/blob/master/CellTrackerImages/GIF-Tracking.gif)
 
 4. Track Cells over time.
+
+
 ![Tracked Cells](https://github.com/GarethCa/SH-Project/blob/master/CellTrackerImages/Tracking.PNG)
 
 All of the above steps can be done from within a TKInter Python GUI. This was chosen so that the target users in the Biology department did not need to have command line user interface experience.
